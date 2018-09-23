@@ -110,9 +110,9 @@ with the understanding that the `Maybe` rules for handling `Just` values and `No
 values allow the applied functions to assume that they will only be applied when the 
 `Maybe` instance is a `Just`.
 
-##API
+## API
 
-###Constructors
+### Constructors
 
 - **Just** `:: a -> Maybe a`
 
@@ -185,7 +185,7 @@ values allow the applied functions to assume that they will only be applied when
                         // 'response received' after the promise resolves
   ```
 
-###Instance methods
+### Instance methods
 
 - **alt** `:: Alt Maybe => Maybe a ~> Maybe a -> Maybe a`
   
