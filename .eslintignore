@@ -1,0 +1,13 @@
+/*
+
+!src
+!docs
+
+docs/*
+!docs/src
+docs/src/*
+!docs/src/pages
+docs/src/pages/*
+!docs/src/pages/docs
+docs/src/pages/docs/*
+

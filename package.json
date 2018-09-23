@@ -1,0 +1,78 @@
+{
+  "name": "maybe-just-maybe",
+  "version": "0.0.1",
+  "description": "A Maybe monad specifically designed for use with ramda.",
+  "main": "./index.js",
+  "scripts": {
+    "contributors:add": "all-contributors add",
+    "contributors:generate": "all-contributors generate",
+    "precommit": "lint-staged",
+    "prepush": "npm test",
+    "preversion": "npm run build",
+    "build:publish": "npm test && ./scripts/build.sh && ./scripts/publish.sh",
+    "build:dist": "webpack && uglifyjs build/dist/maybeJustMaybe.js -c \"warnings=false\" -m -o build/dist/maybeJustMaybe.min.js",
+    "build": "rimraf build && buble -i src -o build --objectAssign Object.assign && npm run build:dist",
+    "lint": "eslint --ext .md,.js .",
+    "lint:dev": "esw --ext .md,.js . -w --color",
+    "spec:coverage": "nyc npm run spec:build",
+    "spec:dev": "nodemon -q -e js -w src -x \"npm run spec:src -s | tap-spec\"",
+    "spec:build": "npm run build && tape build/**/*.spec.js build/*.spec.js",
+    "spec:src": "tape src/**/*.spec.js src/*.spec.js",
+    "test": "npm run lint && npm run spec:coverage",
+    "coverage": "nyc report --reporter=html"
+  },
+  "lint-staged": {
+    "*.{js,md}": [
+      "eslint --fix",
+      "git add"
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/13d-io/maybe-just-maybe.git"
+  },
+  "keywords": [
+    "FP",
+    "Maybe",
+    "Monad"
+  ],
+  "author": "Richard Vance <richiemillennium@gmail.com> (https://github.com/RichieMillennium)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/13d-io/maybe-just-maybe/issues"
+  },
+  "homepage": "https://13d.io/maybe-just-maybe",
+  "nyc": {
+    "check-coverage": true,
+    "lines": 100,
+    "statements": 100,
+    "functions": 100,
+    "branches": 100,
+    "exclude": [
+      "src/",
+      "build/test/",
+      "**/*.spec.js"
+    ]
+  },
+  "devDependencies": {
+    "all-contributors-cli": "^4.11.1",
+    "babel-eslint": "^9.0.0",
+    "buble": "^0.19.3",
+    "eslint": "^5.5.0",
+    "eslint-watch": "^4.0.2",
+    "husky": "^0.14.3",
+    "lint-staged": "^7.2.2",
+    "nodemon": "1.18.4",
+    "nyc": "13.0.1",
+    "rimraf": "^2.6.2",
+    "sinon": "^6.2.0",
+    "tap-spec": "^5.0.0",
+    "tape": "^4.9.1",
+    "uglify-js": "^3.3.22",
+    "webpack": "^4.17.2",
+    "webpack-cli": "^3.1.0"
+  },
+  "dependencies": {
+    "ramda": "^0.25.0"
+  }
+}
