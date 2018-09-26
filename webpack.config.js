@@ -6,7 +6,7 @@ module.exports = {
   output: {
     filename: 'maybeJustMaybe.js',
     path: path.resolve(__dirname, 'build', 'dist'),
-    library: 'crocks',
+    library: 'maybe-just-maybe',
     libraryTarget: 'umd'
   }
 }
