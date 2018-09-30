@@ -47,12 +47,8 @@ const isArray = is(Array)
 const isObject = item => and(is(Object, item), not(is(Array, item)))
 const isString = is(String)
 
-const either =
-  (f, g) => m => m.either(f, g)
-
 module.exports = {
   bindFunc,
-  either,
   fantasyLand,
   isArray,
   isObject,

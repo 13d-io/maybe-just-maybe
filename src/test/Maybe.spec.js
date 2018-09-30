@@ -1,16 +1,9 @@
 const test = require('tape')
 const sinon = require('sinon')
-const {
-  always, compose, is,
-  toUpper, multiply,
-  ifElse, propEq, prop,
-  test: rtest, filter,
-  split, identity, applyTo
-} = require('ramda')
+const R = require('ramda')
 
 const {
   bindFunc,
-  either,
   fantasyLand,
   isArray,
   isObject,
@@ -21,6 +14,10 @@ const {
 } = require('./helpers')
 
 const Maybe = require('../core/Maybe')
+
+// const { toString }
+const { alt, altU, ap, apU, chain, chainU, concat, concatU, either, eitherU, equals, equalsU,
+  is, isU, isJust, isNothing, map, mapU, valueOr } = Maybe
 
 test('Maybe', t => {
   const m = Maybe(0)
@@ -37,6 +34,25 @@ test('Maybe', t => {
   t.ok(isFunction(Maybe.Just), 'provides a Just constructor')
   t.ok(isFunction(Maybe.type), 'provides a type function')
   t.ok(isString(Maybe['@@type']), 'provides a @@type string')
+
+  t.ok(isFunction(Maybe.alt), 'provides an alt function')
+  t.ok(isFunction(Maybe.altU), 'provides an altU function')
+  t.ok(isFunction(Maybe.ap), 'provides an ap function')
+  t.ok(isFunction(Maybe.apU), 'provides an apU function')
+  t.ok(isFunction(Maybe.chain), 'provides a chain function')
+  t.ok(isFunction(Maybe.chainU), 'provides a chainU function')
+  t.ok(isFunction(Maybe.concat), 'provides a concat function')
+  t.ok(isFunction(Maybe.concatU), 'provides a concatU function')
+  t.ok(isFunction(Maybe.either), 'provides an either function')
+  t.ok(isFunction(Maybe.eitherU), 'provides an eitherU function')
+  t.ok(isFunction(Maybe.equals), 'provides an equals function')
+  t.ok(isFunction(Maybe.is), 'provides an is function')
+  t.ok(isFunction(Maybe.isJust), 'provides an isJust function')
+  t.ok(isFunction(Maybe.isNothing), 'provides an isNothing function')
+  t.ok(isFunction(Maybe.map), 'provides a map function')
+  t.ok(isFunction(Maybe.mapU), 'provides a mapU function')
+  t.ok(isFunction(Maybe.toString), 'provides a toString function')
+  t.ok(isFunction(Maybe.valueOr), 'provides a valueOr function')
 
   const err = /Invalid Maybe constructor/
   t.throws(Maybe, err, 'throws with no parameters')
@@ -103,12 +119,11 @@ test('Maybe @@implements', t => {
 test('Maybe @@type', t => {
   const { Just, Nothing } = Maybe
 
-  t.equal(Just(0)['@@type'], Maybe['@@type'], 'static and instance versions are the same for Just')
-  t.equal(Nothing(0)['@@type'], Maybe['@@type'], 'static and instance versions are the same for Nothing')
+  t.equal(Just(0)['@@type'], Maybe['@@type'], 'stand-alone and instance versions are the same for Just')
+  t.equal(Nothing(0)['@@type'], Maybe['@@type'], 'stand-alone and instance versions are the same for Nothing')
 
   t.equal(Just(0)['@@type'], '13d-io/Maybe', 'type returns 13d-io/Maybe for Just')
-  t.equal(Nothing()['@@type'], '13d-io/Maybe', 'type returns 13d-io/Maybe for' +
-    ' Nothing')
+  t.equal(Nothing()['@@type'], '13d-io/Maybe', 'type returns 13d-io/Maybe for Nothing')
 
   t.end()
 })
@@ -147,8 +162,7 @@ test('Maybe alt errors', t => {
 
   const altJust = x => Maybe.of(0).alt(x)
 
-  t.equal(altJust(undefined).isNothing(), true, 'nothing when passed an' +
-    ' undefined with Just')
+  t.equal(altJust(undefined).isNothing(), true, 'nothing when passed an undefined with Just')
   t.equal(altJust(null).isNothing(), true, 'nothing when passed a null with Just')
   t.equal(altJust(0).isNothing(), true, 'nothing when passed a falsey number with Just')
   t.equal(altJust(1).isNothing(), true, 'nothing when passed a truthy number with Just')
@@ -173,6 +187,40 @@ test('Maybe alt errors', t => {
   t.equal(altNothing([]).isNothing(), true, 'nothing when passed an array with Nothing')
   t.equal(altNothing({}).isNothing(), true, 'nothing when passed an object with Nothing')
   t.equal(altNothing(m).isNothing(), true, 'nothing when container types differ on Nothing')
+
+  t.end()
+})
+
+test('Maybe stand-alone alt errors', t => {
+  const m = { type: () => 'Fake Maybe' }
+
+  const altJustIsNothing = R.compose(isNothing, alt(Maybe.of(0)))
+
+  t.ok(altJustIsNothing(undefined), 'nothing when passed an undefined with Just')
+  t.ok(altJustIsNothing(null), 'nothing when passed a null with Just')
+  t.ok(altJustIsNothing(0), 'nothing when passed a falsey number with Just')
+  t.ok(altJustIsNothing(1), 'nothing when passed a truthy number with Just')
+  t.ok(altJustIsNothing(''), 'nothing when passed a falsey string with Just')
+  t.ok(altJustIsNothing('string'), 'nothing when passed a truthy string with Just')
+  t.ok(altJustIsNothing(false), 'nothing when passed false with Just')
+  t.ok(altJustIsNothing(true), 'nothing when passed true with Just')
+  t.ok(altJustIsNothing([]), 'nothing when passed an array with Just')
+  t.ok(altJustIsNothing({}), 'nothing when passed an object with Just')
+  t.ok(altJustIsNothing(m), 'nothing when container types differ on Just')
+
+  const altNothingIsNothing = R.compose(isNothing, alt(Maybe.Nothing()))
+
+  t.ok(altNothingIsNothing(undefined), 'nothing when passed an undefined with Nothing')
+  t.ok(altNothingIsNothing(null), 'nothing when passed a null with Nothing')
+  t.ok(altNothingIsNothing(0), 'nothing when passed a falsey number with Nothing')
+  t.ok(altNothingIsNothing(1), 'nothing when passed a truthy number with Nothing')
+  t.ok(altNothingIsNothing(''), 'nothing when passed a falsey string with Nothing')
+  t.ok(altNothingIsNothing('string'), 'nothing when passed a truthy string with Nothing')
+  t.ok(altNothingIsNothing(false), 'nothing when passed false with Nothing')
+  t.ok(altNothingIsNothing(true), 'nothing when passed true with Nothing')
+  t.ok(altNothingIsNothing([]), 'nothing when passed an array with Nothing')
+  t.ok(altNothingIsNothing({}), 'nothing when passed an object with Nothing')
+  t.ok(altNothingIsNothing(m), 'nothing when container types differ on Nothing')
 
   t.end()
 })
@@ -218,10 +266,35 @@ test('Maybe alt functionality', t => {
   const nothing = Maybe.Nothing()
   const anotherNothing = Maybe.Nothing()
 
-  const f = either(always('nothing'), identity)
+  const f = either(R.always('nothing'), R.identity)
 
   t.equals(f(just.alt(nothing).alt(anotherJust)), 'Just', 'retains first Just success')
   t.equals(f(nothing.alt(anotherNothing)), 'nothing', 'provdes Nothing when all Nothings')
+
+  t.end()
+})
+
+test('Maybe stand-alone alt functionality', t => {
+  const just = Maybe.of('Just')
+  const anotherJust = Maybe.of('Another Just')
+
+  const nothing = Maybe.Nothing()
+  const anotherNothing = Maybe.Nothing()
+
+  const f = either(R.always('nothing'), R.identity)
+
+  const alt1 = alt(just)(nothing)
+  const alt2 = alt(alt1)(anotherJust)
+  const alt3 = altU(just, nothing)
+  const alt4 = altU(alt3, anotherJust)
+
+  const alt5 = alt(nothing)(anotherNothing)
+  const alt6 = altU(nothing, anotherNothing)
+
+  t.equals(f(alt2), 'Just', 'retains first Just success')
+  t.equals(f(alt4), 'Just', 'retains first Just success')
+  t.equals(f(alt5), 'nothing', 'provdes Nothing when all Nothings')
+  t.equals(f(alt6), 'nothing', 'provdes Nothing when all Nothings')
 
   t.end()
 })
@@ -230,8 +303,7 @@ test('Maybe ap errors', t => {
   const m = { type: () => 'Maybe...Not' }
   const ap = x => Maybe.Just(unit).ap(x)
 
-  t.equal(Maybe(0).ap(null, Maybe(0)).isNothing(), true, 'nothing when wrapped' +
-    ' value is a falsey number')
+  t.equal(Maybe(0).ap(null, Maybe(0)).isNothing(), true, 'nothing when wrapped value is a falsey number')
   t.equal(Maybe(1).ap(null, Maybe(0)).isNothing(), true, 'nothing when wrapped value is a truthy number')
   t.equal(Maybe('').ap(null, Maybe(0)).isNothing(), true, 'nothing when wrapped value is a falsey string')
   t.equal(Maybe('string').ap(null, Maybe(0)).isNothing(), true, 'nothing when wrapped value is a truthy string')
@@ -257,14 +329,44 @@ test('Maybe ap errors', t => {
   t.end()
 })
 
+test('Maybe stand-alone ap errors', t => {
+  const m = { type: () => 'Fake Maybe' }
+  const checker = R.compose(isNothing, ap(Maybe.Just(unit)))
+
+  t.ok(ap(Maybe(0))(null, Maybe(0)).isNothing(), 'nothing when wrapped value is a falsey number')
+  t.ok(ap(Maybe(1))(null, Maybe(0)).isNothing(), 'nothing when wrapped value is a truthy number')
+  t.ok(ap(Maybe(''))(null, Maybe(0)).isNothing(), 'nothing when wrapped value is a falsey string')
+  t.ok(ap(Maybe('string'))(null, Maybe(0)).isNothing(), 'nothing when wrapped value is a truthy string')
+  t.ok(ap(Maybe(false))(null, Maybe(0)).isNothing(), 'nothing when wrapped value is false')
+  t.ok(ap(Maybe(true))(null, Maybe(0)).isNothing(), 'nothing when wrapped value is true')
+  t.ok(ap(Maybe([]))(null, Maybe(0)).isNothing(), 'nothing when wrapped value is an array')
+  t.ok(ap(Maybe({}))(null, Maybe(0)).isNothing(), 'nothing when wrapped value is an object')
+
+  t.ok(checker(undefined), 'nothing with undefined')
+  t.ok(checker(null), 'nothing with null')
+  t.ok(checker(0), 'nothing with falsey number')
+  t.ok(checker(1), 'nothing with truthy number')
+  t.ok(checker(''), 'nothing with falsey string')
+  t.ok(checker('string'), 'nothing with truthy string')
+  t.ok(checker(false), 'nothing with false')
+  t.ok(checker(true), 'nothing with true')
+  t.ok(checker([]), 'nothing with an array')
+  t.ok(checker({}), 'nothing with an object')
+  t.ok(checker(m), 'nothing when container types differ')
+
+  t.doesNotThrow(() => checker(Maybe.Just(0)), 'allows a Maybe')
+
+  t.end()
+})
+
 test('Maybe ap example', t => {
-  const doubleIt = multiply(2)
-  const wrapIt = ifElse(
-    is(Number),
+  const doubleIt = R.multiply(2)
+  const wrapIt = R.ifElse(
+    R.is(Number),
     Maybe.of,
     Maybe.Nothing
   )
-  const safeDouble = compose(Maybe.of(doubleIt).ap, wrapIt)
+  const safeDouble = R.compose(Maybe.of(doubleIt).ap, wrapIt)
   const nothingOption = '__NOTHING_OPTION__'
 
   t.equal(safeDouble(10).valueOr(nothingOption), 20, 'Doubles the value safely')
@@ -277,9 +379,29 @@ test('Maybe ap example', t => {
   t.end()
 })
 
+test('Maybe stand-alone ap example', t => {
+  const doubleIt = R.multiply(2)
+  const wrapIt = R.ifElse(
+    R.is(Number),
+    Maybe.of,
+    Maybe.Nothing
+  )
+  const nothingOption = '__NOTHING_OPTION__'
+  const checker = R.compose(valueOr(nothingOption), ap(Maybe.of(doubleIt)), wrapIt)
+
+  t.equal(checker(10), 20, 'Doubles the value safely')
+  t.equal(checker(0), 0, 'Handles zero just fine')
+  t.equal(checker(null), nothingOption, 'Safely handles a null using Nothing')
+  t.equal(checker([ 1, 2 ]), nothingOption, 'Safely handles a non-number using Nothing')
+  t.equal(checker('one hundred'), nothingOption, 'Safely handles a string using Nothing')
+  t.equal(checker(() => 99), nothingOption, 'Safely handles a function using Nothing')
+
+  t.end()
+})
+
 test('Maybe ap demo', t => {
   const a = Maybe.of(3)
-  const f = Maybe.of(multiply(2))
+  const f = Maybe.of(R.multiply(2))
   const n = Maybe.Nothing()
 
   const af = a.ap(f)
@@ -291,6 +413,33 @@ test('Maybe ap demo', t => {
   test(fa.toString(), 'Just 6', 'f ap a')
   test(fn.isNothing(), true, 'f ap nothing')
   test(na.isNothing(), true, 'nothing ap f')
+
+  t.end()
+})
+
+test('Maybe stand-alone ap demo', t => {
+  const a = Maybe.of(3)
+  const f = Maybe.of(R.multiply(2))
+  const n = Maybe.Nothing()
+
+  const af = ap(a)(f)
+  const fa = ap(f)(a)
+  const fn = ap(f)(n)
+  const na = ap(n)(a)
+
+  const af2 = apU(a, f)
+  const fa2 = apU(f, a)
+  const fn2 = apU(f, n)
+  const na2 = apU(n, a)
+
+  test(af.toString(), 'Just 6', 'a ap f')
+  test(fa.toString(), 'Just 6', 'f ap a')
+  test(fn.isNothing(), true, 'f ap nothing')
+  test(na.isNothing(), true, 'nothing ap f')
+  test(af2.toString(), 'Just 6', 'a ap f')
+  test(fa2.toString(), 'Just 6', 'f ap a')
+  test(fn2.isNothing(), true, 'f ap nothing')
+  test(na2.isNothing(), true, 'nothing ap f')
 
   t.end()
 })
@@ -371,10 +520,48 @@ test('Maybe chain errors', t => {
   t.throws(chain([]), noFunc, 'throws with an array')
   t.throws(chain({}), noFunc, 'throws with an object')
 
-  t.equal(chain(unit)().isNothing(), true, 'nothing with a non-Maybe' +
-    ' returning function')
+  t.equal(chain(unit)().isNothing(), true, 'nothing with a non-Maybe returning function')
 
   t.doesNotThrow(chain(Maybe.of), 'allows a Maybe returning function')
+
+  t.end()
+})
+
+test('Maybe stand-alone chain errors', t => {
+  const chainer = bindFunc(f => chain(f)(Maybe(0)))
+  const chainerU = bindFunc(f => chainU(f, Maybe(0)))
+
+  const noFunc = /f is not a function/
+
+  t.throws(chainer(undefined), noFunc, 'standalone throws with undefined')
+  t.throws(chainer(null), noFunc, 'standalone throws with null')
+  t.throws(chainer(0), noFunc, 'standalone throws with falsey number')
+  t.throws(chainer(1), noFunc, 'standalone throws with truthy number')
+  t.throws(chainer(''), noFunc, 'standalone throws with falsey string')
+  t.throws(chainer('string'), noFunc, 'standalone throws with truthy string')
+  t.throws(chainer(false), noFunc, 'standalone throws with false')
+  t.throws(chainer(true), noFunc, 'standalone throws with true')
+  t.throws(chainer([]), noFunc, 'standalone throws with an array')
+  t.throws(chainer({}), noFunc, 'standalone throws with an object')
+
+  t.equal(chainer(unit)().isNothing(), true, 'nothing with a non-Maybe returning function')
+
+  t.doesNotThrow(chainer(Maybe.of), 'allows a Maybe returning function')
+
+  t.throws(chainerU(undefined), noFunc, 'uncurried throws with undefined')
+  t.throws(chainerU(null), noFunc, 'uncurried throws with null')
+  t.throws(chainerU(0), noFunc, 'uncurried throws with falsey number')
+  t.throws(chainerU(1), noFunc, 'uncurried throws with truthy number')
+  t.throws(chainerU(''), noFunc, 'uncurried throws with falsey string')
+  t.throws(chainerU('string'), noFunc, 'uncurried throws with truthy string')
+  t.throws(chainerU(false), noFunc, 'uncurried throws with false')
+  t.throws(chainerU(true), noFunc, 'uncurried throws with true')
+  t.throws(chainerU([]), noFunc, 'uncurried throws with an array')
+  t.throws(chainerU({}), noFunc, 'uncurried throws with an object')
+
+  t.equal(chainerU(unit)().isNothing(), true, 'nothing with a non-Maybe returning function')
+
+  t.doesNotThrow(chainerU(Maybe.of), 'allows a Maybe returning function')
 
   t.end()
 })
@@ -394,8 +581,7 @@ test('Maybe chain fantasy-land errors', t => {
   t.throws(chain([]), noFunc, 'throws with an array')
   t.throws(chain({}), noFunc, 'throws with an object')
 
-  t.equal(chain(unit)().isNothing(), true, 'nothing with a non-Maybe' +
-    ' returning function')
+  t.equal(chain(unit)().isNothing(), true, 'nothing with a non-Maybe returning function')
 
   t.doesNotThrow(chain(Maybe.of), 'allows a Maybe returning function')
 
@@ -410,14 +596,14 @@ test('Maybe chain demo', t => {
     { value: 'bird', type: 'pet', active: false },
     { value: 'cherry', type: 'pit', active: true }
   ])
-  const getActives = filter(propEq('active', true))
-  const getPets = filter(propEq('type', 'pet'))
-  const findCs = compose(rtest(/^c/), prop('value'))
-  const getCs = filter(findCs)
+  const getActives = R.filter(R.propEq('active', true))
+  const getPets = R.filter(R.propEq('type', 'pet'))
+  const findCs = R.compose(R.test(/^c/), R.prop('value'))
+  const getCs = R.filter(findCs)
 
-  const isActive = compose(Maybe.of, getActives)
-  const isPet = compose(Maybe.of, getPets)
-  const startsWithC = compose(Maybe.of, getCs)
+  const isActive = R.compose(Maybe.of, getActives)
+  const isPet = R.compose(Maybe.of, getPets)
+  const startsWithC = R.compose(Maybe.of, getCs)
 
   const cs = a.chain(startsWithC)
   const pets = a.chain(isPet)
@@ -434,6 +620,59 @@ test('Maybe chain demo', t => {
   t.equal(activeCPets.map(item => item.value).toString(),
     'Just ["cat"]', 'chains starts with c, pets, and active')
   t.equal(nonstarter.isNothing(), true, 'starting with nothing is a nonstarter')
+
+  t.end()
+})
+
+test('Maybe stand-alone chain demo', t => {
+  const a = Maybe.of([
+    { value: 'cat', type: 'pet', active: true },
+    { value: 'flower', type: 'pot', active: false },
+    { value: 'dog', type: 'pet', active: true },
+    { value: 'bird', type: 'pet', active: false },
+    { value: 'cherry', type: 'pit', active: true }
+  ])
+  const getActives = R.filter(R.propEq('active', true))
+  const getPets = R.filter(R.propEq('type', 'pet'))
+  const findCs = R.compose(R.test(/^c/), R.prop('value'))
+  const getCs = R.filter(findCs)
+
+  const isActive = R.compose(Maybe.of, getActives)
+  const isPet = R.compose(Maybe.of, getPets)
+  const startsWithC = R.compose(Maybe.of, getCs)
+
+  const cChain = chain(startsWithC)
+  const petChain = chain(isPet)
+  const activeChain = chain(isActive)
+  const activeCPets = R.compose(cChain, petChain, activeChain)
+
+  const cs = chainU(startsWithC, a)
+  const pets = chainU(isPet, a)
+  const actives = chainU(isActive, a)
+  const activeCs = chainU(isActive, cs)
+  const activeCPets2 = chainU(isPet, activeCs)
+  const nonstarter = chainU(startsWithC, Maybe.Nothing())
+  const stillnonstarter = chainU(isPet, nonstarter)
+
+  t.equal(cChain(a).map(item => item.value).toString(), 'Just ["cat","cherry"]',
+    'chains starts with c')
+  t.equal(petChain(a).map(item => item.value).toString(),
+    'Just ["cat","dog","bird"]', 'chains pets')
+  t.equal(activeChain(a).map(item => item.value).toString(),
+    'Just ["cat","dog","cherry"]', 'chains actives')
+  t.equal(activeCPets(a).map(item => item.value).toString(),
+    'Just ["cat"]', 'chains starts with c, pets, and active')
+  t.equal(activeCPets(Maybe.Nothing()).isNothing(), true, 'starting with nothing is a nonstarter')
+  t.equal(cs.map(item => item.value).toString(), 'Just ["cat","cherry"]',
+    'chains starts with c')
+  t.equal(pets.map(item => item.value).toString(),
+    'Just ["cat","dog","bird"]', 'chains pets')
+  t.equal(actives.map(item => item.value).toString(),
+    'Just ["cat","dog","cherry"]', 'chains actives')
+  t.equal(activeCPets2.map(item => item.value).toString(),
+    'Just ["cat"]', 'chains starts with c, pets, and active')
+  t.equal(nonstarter.isNothing(), true, 'starting with nothing is a nonstarter')
+  t.equal(stillnonstarter.isNothing(), true, 'starting with nothing is a nonstarter')
 
   t.end()
 })
@@ -486,11 +725,107 @@ test('Maybe concat mismatches', t => {
   t.end()
 })
 
-test('Maybe concat errors', t => {
+test('Maybe stand-alone concat mismatches', t => {
+  const m = { type: () => 'Maybe...Not' }
 
   const good = Maybe.of([])
 
+  const f = concat(good)
+  const fu = x => concatU(good, x)
+
+  t.equal(f(undefined).isNothing(), true, 'nothing with undefined')
+  t.equal(f(null).isNothing(), true, 'nothing with null')
+  t.equal(f(0).isNothing(), true, 'nothing with falsey number')
+  t.equal(f(1).isNothing(), true, 'nothing with truthy number')
+  t.equal(f('').isNothing(), true, 'nothing with falsey string')
+  t.equal(f('string').isNothing(), true, 'nothing with truthy string')
+  t.equal(f(false).isNothing(), true, 'nothing with false')
+  t.equal(f(true).isNothing(), true, 'nothing with true')
+  t.equal(f([]).isNothing(), true, 'nothing with array')
+  t.equal(f({}).isNothing(), true, 'nothing with object')
+  t.equal(f(m).isNothing(), true, 'nothing with non-Maybe')
+
+  t.equal(fu(undefined).isNothing(), true, 'nothing with undefined')
+  t.equal(fu(null).isNothing(), true, 'nothing with null')
+  t.equal(fu(0).isNothing(), true, 'nothing with falsey number')
+  t.equal(fu(1).isNothing(), true, 'nothing with truthy number')
+  t.equal(fu('').isNothing(), true, 'nothing with falsey string')
+  t.equal(fu('string').isNothing(), true, 'nothing with truthy string')
+  t.equal(fu(false).isNothing(), true, 'nothing with false')
+  t.equal(fu(true).isNothing(), true, 'nothing with true')
+  t.equal(fu([]).isNothing(), true, 'nothing with array')
+  t.equal(fu({}).isNothing(), true, 'nothing with object')
+  t.equal(fu(m).isNothing(), true, 'nothing with non-Maybe')
+
+  const nothingDefault = '__NOTHING_DEFAULT__'
+  const checkValue = valueOr(nothingDefault)
+  const notSemiLeft = x => checkValue(concat(Maybe.of(x))(good))
+  const notSemiLeftU = x => checkValue(concatU(Maybe.of(x), good))
+  const goodValue = valueOr(nothingDefault + '__GOOD__')(good)
+
+  t.equal(notSemiLeft(undefined), goodValue, 'good again with undefined on left')
+  t.equal(notSemiLeft(null), goodValue, 'good again with null on left')
+  t.equal(notSemiLeft(0), nothingDefault, 'nothing with falsey number on left')
+  t.equal(notSemiLeft(1), nothingDefault, 'nothing with truthy number on left')
+  t.equal(notSemiLeft(''), nothingDefault, 'nothing with falsey string on left')
+  t.equal(notSemiLeft('string'), nothingDefault, 'nothing with truthy string on left')
+  t.equal(notSemiLeft(false), nothingDefault, 'nothing with false on left')
+  t.equal(notSemiLeft(true), nothingDefault, 'nothing with true on left')
+  t.equal(notSemiLeft({}), nothingDefault, 'nothing with object on left')
+
+  t.equal(notSemiLeftU(undefined), goodValue, 'good again with undefined on left')
+  t.equal(notSemiLeftU(null), goodValue, 'good again with null on left')
+  t.equal(notSemiLeftU(0), nothingDefault, 'nothing with falsey number on left')
+  t.equal(notSemiLeftU(1), nothingDefault, 'nothing with truthy number on left')
+  t.equal(notSemiLeftU(''), nothingDefault, 'nothing with falsey string on left')
+  t.equal(notSemiLeftU('string'), nothingDefault, 'nothing with truthy string on left')
+  t.equal(notSemiLeftU(false), nothingDefault, 'nothing with false on left')
+  t.equal(notSemiLeftU(true), nothingDefault, 'nothing with true on left')
+  t.equal(notSemiLeftU({}), nothingDefault, 'nothing with object on left')
+
+  const notSemiRight = x => checkValue(concat(good)(Maybe.of(x)))
+  const notSemiRightU = x => checkValue(concatU(good, Maybe.of(x)))
+
+  t.equal(notSemiRight(undefined), goodValue, 'good again with undefined on right')
+  t.equal(notSemiRight(null), goodValue, 'good again with null on right')
+  t.equal(notSemiRight(0), nothingDefault, 'nothing with falsey number on right')
+  t.equal(notSemiRight(1), nothingDefault, 'nothing with truthy number on right')
+  t.equal(notSemiRight(''), nothingDefault, 'nothing with falsey string on right')
+  t.equal(notSemiRight('string'), nothingDefault, 'nothing with truthy string on right')
+  t.equal(notSemiRight(false), nothingDefault, 'nothing with false on right')
+  t.equal(notSemiRight(true), nothingDefault, 'nothing with true on right')
+  t.equal(notSemiRight({}), nothingDefault, 'nothing with object on right')
+
+  t.equal(notSemiRightU(undefined), goodValue, 'good again with undefined on right')
+  t.equal(notSemiRightU(null), goodValue, 'good again with null on right')
+  t.equal(notSemiRightU(0), nothingDefault, 'nothing with falsey number on right')
+  t.equal(notSemiRightU(1), nothingDefault, 'nothing with truthy number on right')
+  t.equal(notSemiRightU(''), nothingDefault, 'nothing with falsey string on right')
+  t.equal(notSemiRightU('string'), nothingDefault, 'nothing with truthy string on right')
+  t.equal(notSemiRightU(false), nothingDefault, 'nothing with false on right')
+  t.equal(notSemiRightU(true), nothingDefault, 'nothing with true on right')
+  t.equal(notSemiRightU({}), nothingDefault, 'nothing with object on right')
+
+  t.end()
+})
+
+test('Maybe concat errors', t => {
+
+  const good = Maybe.of([])
   const noMatch = () => good.concat(Maybe.of(''))
+  const noMatchU = () => concatU(good, Maybe.of(''))
+
+  t.equal(noMatch().isNothing(), true, 'nothing with different semigroups')
+  t.equal(noMatchU().isNothing(), true, 'nothing with different semigroups')
+
+  t.end()
+})
+
+test('Maybe stand-alone concat errors', t => {
+
+  const good = concat(Maybe.of([]))
+
+  const noMatch = () => good(Maybe.of(''))
   t.equal(noMatch().isNothing(), true, 'nothing with different semigroups')
 
   t.end()
@@ -549,7 +884,7 @@ test('Maybe concat fantasy-land errors', t => {
 
 test('Maybe concat functionality', t => {
   const extract =
-    either(always('Nothing'), identity)
+    either(R.always('Nothing'), R.identity)
 
   const nothing = Maybe.Nothing()
   const a = Maybe.Just([ 1, 2 ])
@@ -560,16 +895,12 @@ test('Maybe concat functionality', t => {
   const nothingLeft = nothing.concat(a)
 
   t.ok(isSameType(Maybe, just), 'returns another Maybe with Just')
-  t.ok(isSameType(Maybe, nothingRight), 'returns another Maybe with Nothing' +
-    ' on Right')
-  t.ok(isSameType(Maybe, nothingLeft), 'returns another Maybe with Nothing' +
-    ' on Left')
+  t.ok(isSameType(Maybe, nothingRight), 'returns another Maybe with Nothing on Right')
+  t.ok(isSameType(Maybe, nothingLeft), 'returns another Maybe with Nothing on Left')
 
   t.same(extract(just), [ 1, 2, 4, 3 ], 'concats the inner semigroup with Justs')
-  t.same(extract(nothingRight), [ 1, 2 ], 'returns a with a Nothing' +
-    ' on Right')
-  t.same(extract(nothingLeft), [ 1, 2 ], 'returns a with a Nothing' +
-    ' on Left')
+  t.same(extract(nothingRight), [ 1, 2 ], 'returns a with a Nothing on Right')
+  t.same(extract(nothingLeft), [ 1, 2 ], 'returns a with a Nothing on Left')
 
   const a$ = Maybe.Just('front')
   const b$ = Maybe.Just('back')
@@ -582,6 +913,56 @@ test('Maybe concat functionality', t => {
   const cf = af.concat(bf)
 
   t.equal(cf.isNothing(), true, 'returns nothing on 2 functions')
+
+  t.end()
+})
+
+test('Maybe stand-alone concat functionality', t => {
+  const extract =
+    either(R.always('Nothing'), R.identity)
+
+  const nothing = Maybe.Nothing()
+  const a = Maybe.Just([ 1, 2 ])
+  const b = Maybe.Just([ 4, 3 ])
+
+  const just = concat(a)(b)
+  const justU = concatU(a, b)
+  const nothingRight = concat(a)(nothing)
+  const nothingRightU = concatU(a, nothing)
+  const nothingLeft = concat(nothing)(a)
+  const nothingLeftU = concatU(nothing, a)
+
+  t.ok(isSameType(Maybe, just), 'returns another Maybe with Just')
+  t.ok(isSameType(Maybe, nothingRight), 'returns another Maybe with Nothing on Right')
+  t.ok(isSameType(Maybe, nothingLeft), 'returns another Maybe with Nothing on Left')
+
+  t.ok(isSameType(Maybe, justU), 'returns another Maybe with Just')
+  t.ok(isSameType(Maybe, nothingRightU), 'returns another Maybe with Nothing on Right')
+  t.ok(isSameType(Maybe, nothingLeftU), 'returns another Maybe with Nothing on Left')
+
+  t.same(extract(just), [ 1, 2, 4, 3 ], 'concats the inner semigroup with Justs')
+  t.same(extract(nothingRight), [ 1, 2 ], 'returns a with a Nothing on Right')
+  t.same(extract(nothingLeft), [ 1, 2 ], 'returns a with a Nothing on Left')
+
+  t.same(extract(justU), [ 1, 2, 4, 3 ], 'concats the inner semigroup with Justs')
+  t.same(extract(nothingRightU), [ 1, 2 ], 'returns a with a Nothing on Right')
+  t.same(extract(nothingLeftU), [ 1, 2 ], 'returns a with a Nothing on Left')
+
+  const a$ = Maybe.Just('front')
+  const b$ = Maybe.Just('back')
+  const c$ = concat(a$)(b$)
+  const cu$ = concatU(a$, b$)
+
+  t.equal(extract(c$), 'frontback', 'implements the ramda concat on strings')
+  t.equal(extract(cu$), 'frontback', 'implements the ramda concat on strings')
+
+  const af = Maybe.Just(() => 'front')
+  const bf = Maybe.Just(() => 'back')
+  const cf = concat(af)(bf)
+  const cfu = concatU(af, bf)
+
+  t.equal(cf.isNothing(), true, 'returns nothing on 2 functions')
+  t.equal(cfu.isNothing(), true, 'returns nothing on 2 functions')
 
   t.end()
 })
@@ -606,6 +987,39 @@ test('Maybe concat demo', t => {
   t.end()
 })
 
+test('Maybe stand-alone concat demo', t => {
+  const a = Maybe.of([ 1, 3, 5 ])
+  const b = Maybe.of([ 6, 8 ])
+  const c = Maybe.of([ 9 ])
+  const n = Maybe.Nothing()
+
+  const nothingValue = '_NOTHING_DEFAULT'
+  const checkValue = valueOr(nothingValue)
+  const concatWithA = concat(a)
+  const concatWithB = concat(b)
+  const concatWithN = concat(n)
+
+  t.deepEqual(checkValue(concatWithA(b)), [ 1, 3, 5, 6, 8 ], 'simple concat')
+  t.deepEqual(checkValue(concatWithB(c)), [ 6, 8, 9 ], 'another simple concat')
+  t.deepEqual(checkValue(concatWithA(n)), [ 1, 3, 5 ], 'a concat nothing')
+  t.deepEqual(checkValue(concatWithN(b)), [ 6, 8 ], 'nothing concat b')
+  t.deepEqual(checkValue(concat(concatWithA(b))(c)), [ 1, 3, 5, 6, 8, 9 ], '2 concats')
+  t.deepEqual(checkValue(concatWithA(concatWithB(c))), [ 1, 3, 5, 6, 8, 9 ], '2 concats different association')
+  t.deepEqual(checkValue(concat(concatWithA(n))(c)), [ 1, 3, 5, 9 ],
+    'nothing in the middle disappears')
+
+  t.deepEqual(checkValue(concatU(a, b)), [ 1, 3, 5, 6, 8 ], 'simple concat')
+  t.deepEqual(checkValue(concatU(b, c)), [ 6, 8, 9 ], 'another simple concat')
+  t.deepEqual(checkValue(concatU(a, n)), [ 1, 3, 5 ], 'a concat nothing')
+  t.deepEqual(checkValue(concatU(n, b)), [ 6, 8 ], 'nothing concat b')
+  t.deepEqual(checkValue(concatU(concatU(a, b), c)), [ 1, 3, 5, 6, 8, 9 ], '2 concats')
+  t.deepEqual(checkValue(concatU(a, concatU(b, c))), [ 1, 3, 5, 6, 8, 9 ], '2 concats different association')
+  t.deepEqual(checkValue(concatU(concatU(a, n), c)), [ 1, 3, 5, 9 ],
+    'nothing in the middle disappears')
+
+  t.end()
+})
+
 test('Maybe concat string demo', t => {
   const a = Maybe.of('135')
   const b = Maybe.of('68')
@@ -621,6 +1035,40 @@ test('Maybe concat string demo', t => {
   t.deepEqual(a.concat(b).concat(c).valueOr(nothingValue), '135689', '2 concats')
   t.deepEqual(a.concat(b.concat(c)).valueOr(nothingValue), '135689', '2 concats different association')
   t.deepEqual(a.concat(n).concat(c).valueOr(nothingValue), '1359',
+    'nothing in the middle disappears')
+
+  t.end()
+})
+
+test('Maybe stand-alone concat string demo', t => {
+  const a = Maybe.of('135')
+  const b = Maybe.of('68')
+  const c = Maybe.of('9')
+  const n = Maybe.Nothing()
+
+  const concatWithA = concat(a)
+  const concatWithB = concat(b)
+  const concatWithN = concat(n)
+
+  const nothingValue = '_NOTHING_DEFAULT'
+  const checkValue = valueOr(nothingValue)
+
+  t.deepEqual(checkValue(concatWithA(b)), '13568', 'simple concat')
+  t.deepEqual(checkValue(concatWithB(c)), '689', 'another simple concat')
+  t.deepEqual(checkValue(concatWithA(n)), '135', 'a concat nothing')
+  t.deepEqual(checkValue(concatWithN(b)), '68', 'nothing concat b')
+  t.deepEqual(checkValue(concat(concatWithA(b))(c)), '135689', '2 concats')
+  t.deepEqual(checkValue(concat(a)(concatWithB(c))), '135689', '2 concats different association')
+  t.deepEqual(checkValue(concat(concatWithA(n))(c)), '1359',
+    'nothing in the middle disappears')
+
+  t.deepEqual(checkValue(concatU(a, b)), '13568', 'simple concat')
+  t.deepEqual(checkValue(concatU(b, c)), '689', 'another simple concat')
+  t.deepEqual(checkValue(concatU(a, n)), '135', 'a concat nothing')
+  t.deepEqual(checkValue(concatU(n, b)), '68', 'nothing concat b')
+  t.deepEqual(checkValue(concatU(concatU(a, b), c)), '135689', '2 concats')
+  t.deepEqual(checkValue(concatU(a, concatU(b, c))), '135689', '2 concats different association')
+  t.deepEqual(checkValue(concatU(concatU(a, n), c)), '1359',
     'nothing in the middle disappears')
 
   t.end()
@@ -658,9 +1106,84 @@ test('Maybe either', t => {
   const nothing = Maybe.Nothing()
   const just = Maybe.Just(11)
 
-  t.equal(nothing.either(always('nothing'), always('something')), 'nothing', 'returns left function result when called on Nothing')
-  t.equal(just.either(always('nothing'), always('something')), 'something', 'returns right function result when called on Somthing')
-  t.equal(just.either(always('nothing'), x => x*2), 22, 'returns right function applied to the just value when called on Something')
+  t.equal(nothing.either(R.always('nothing'), R.always('something')), 'nothing', 'returns left function result when called on Nothing')
+  t.equal(just.either(R.always('nothing'), R.always('something')), 'something', 'returns right function result when called on Somthing')
+  t.equal(just.either(R.always('nothing'), x => x*2), 22, 'returns right function applied to the just value when called on Something')
+
+  t.end()
+})
+
+test('Maybe stand-alone either', t => {
+  const fn = bindFunc((l, r) => either(l, r)(Maybe.Nothing()))
+  const fj = bindFunc((l, r) => either(l, r)(Maybe.Just(23)))
+  const fnu = bindFunc((l, r) => eitherU(l, r, Maybe.Nothing()))
+  const fju = bindFunc((l, r) => eitherU(l, r, Maybe.Just(23)))
+
+  const err = /left is not a function/
+  const righterr = /right is not a function/
+
+  t.throws(fn(), err, 'throws when nothing passed')
+  t.throws(fn(null, unit), err, 'throws with null in left')
+  t.throws(fn(undefined, unit), err, 'throws with undefined in left')
+  t.throws(fn(0, unit), err, 'throws with falsey number in left')
+  t.throws(fn(1, unit), err, 'throws with truthy number in left')
+  t.throws(fn('', unit), err, 'throws with falsey string in left')
+  t.throws(fn('string', unit), err, 'throws with truthy string in left')
+  t.throws(fn(false, unit), err, 'throws with false in left')
+  t.throws(fn(true, unit), err, 'throws with true in left')
+  t.throws(fn({}, unit), err, 'throws with object in left')
+  t.throws(fn([], unit), err, 'throws with array in left')
+
+  t.throws(fnu(), err, 'throws when nothing passed')
+  t.throws(fnu(null, unit), err, 'throws with null in left')
+  t.throws(fnu(undefined, unit), err, 'throws with undefined in left')
+  t.throws(fnu(0, unit), err, 'throws with falsey number in left')
+  t.throws(fnu(1, unit), err, 'throws with truthy number in left')
+  t.throws(fnu('', unit), err, 'throws with falsey string in left')
+  t.throws(fnu('string', unit), err, 'throws with truthy string in left')
+  t.throws(fnu(false, unit), err, 'throws with false in left')
+  t.throws(fnu(true, unit), err, 'throws with true in left')
+  t.throws(fnu({}, unit), err, 'throws with object in left')
+  t.throws(fnu([], unit), err, 'throws with array in left')
+
+  t.throws(fj(unit, null), righterr, 'throws with null in right')
+  t.throws(fj(unit, undefined), righterr, 'throws with undefined in right')
+  t.throws(fj(unit, 0), righterr, 'throws with falsey number in right')
+  t.throws(fj(unit, 1), righterr, 'throws with truthy number in right')
+  t.throws(fj(unit, ''), righterr, 'throws with falsey string in right')
+  t.throws(fj(unit, 'string'), righterr, 'throws with truthy string in right')
+  t.throws(fj(unit, false), righterr, 'throws with false in right')
+  t.throws(fj(unit, true), righterr, 'throws with true in right')
+  t.throws(fj(unit, {}), righterr, 'throws with object in right')
+  t.throws(fj(unit, []), righterr, 'throws with array in right')
+
+  t.throws(fju(unit, null), righterr, 'throws with null in right')
+  t.throws(fju(unit, undefined), righterr, 'throws with undefined in right')
+  t.throws(fju(unit, 0), righterr, 'throws with falsey number in right')
+  t.throws(fju(unit, 1), righterr, 'throws with truthy number in right')
+  t.throws(fju(unit, ''), righterr, 'throws with falsey string in right')
+  t.throws(fju(unit, 'string'), righterr, 'throws with truthy string in right')
+  t.throws(fju(unit, false), righterr, 'throws with false in right')
+  t.throws(fju(unit, true), righterr, 'throws with true in right')
+  t.throws(fju(unit, {}), righterr, 'throws with object in right')
+  t.throws(fju(unit, []), righterr, 'throws with array in right')
+
+  const nothing = Maybe.Nothing()
+  const just = Maybe.Just(11)
+
+  const chooser = either(R.always('nothing'), R.always('something'))
+  const doubleChooser = either(R.always('nothing'), x => x*2)
+
+  t.equal(chooser(nothing), 'nothing', 'returns left function result when called on Nothing')
+  t.equal(chooser(just), 'something', 'returns right function result when called on Somthing')
+  t.equal(doubleChooser(just), 22, 'returns right function applied to the just value when called on Something')
+
+  const chooserU = m => eitherU(R.always('nothing'), R.always('something'), m)
+  const doubleChooserU = m => eitherU(R.always('nothing'), x => x*2, m)
+
+  t.equal(chooserU(nothing), 'nothing', 'returns left function result when called on Nothing')
+  t.equal(chooserU(just), 'something', 'returns right function result when called on Somthing')
+  t.equal(doubleChooserU(just), 22, 'returns right function applied to the just value when called on Something')
 
   t.end()
 })
@@ -669,11 +1192,29 @@ test('Maybe either demo', t => {
   const j = Maybe.of('the quick brown fox')
   const n = Maybe.Nothing()
 
-  const left = always([])
-  const right = split(' ')
+  const left = R.always([])
+  const right = R.split(' ')
 
   t.deepEqual(j.either(left, right), [ 'the', 'quick', 'brown', 'fox' ], 'either split right')
   t.deepEqual(n.either(left, right), [], 'either split left')
+
+  t.end()
+})
+
+test('Maybe stand-alone either demo', t => {
+  const j = Maybe.of('the quick brown fox')
+  const n = Maybe.Nothing()
+
+  const left = R.always([])
+  const right = R.split(' ')
+
+  const chooser = either(left, right)
+
+  t.deepEqual(chooser(j), [ 'the', 'quick', 'brown', 'fox' ], 'either split right')
+  t.deepEqual(chooser(n), [], 'either split left')
+
+  t.deepEqual(eitherU(left, right, j), [ 'the', 'quick', 'brown', 'fox' ], 'either split right')
+  t.deepEqual(eitherU(left, right, n), [], 'either split left')
 
   t.end()
 })
@@ -720,6 +1261,36 @@ test('Maybe equals functionality', t => {
   t.end()
 })
 
+test('Maybe stand-alone equals functionality', t => {
+  const a = Maybe.Just(0)
+  const b = Maybe.Just(0)
+  const c = Maybe.Just(1)
+
+  const d = Maybe.Just(undefined)
+  const n = Maybe.Nothing()
+
+  const value = 0
+  const nonMaybe = { type: 'Maybe...Not' }
+
+  t.equal(equals(a)(c), false, 'returns false when 2 Justs are not equal')
+  t.equal(equals(d)(n), false, 'returns false when Just(undefinded) and Nothing compared')
+  t.equal(equals(a)(value), false, 'returns false when passed a simple value')
+  t.equal(equals(a)(nonMaybe), false, 'returns false when passed a non-Maybe')
+
+  t.equal(equals(a)(b), true, 'returns true when 2 Justs are equal')
+  t.equal(equals(n)(Maybe.Nothing()), true, 'returns true when Nothings compared')
+
+  t.equal(equalsU(a, c), false, 'returns false when 2 Justs are not equal')
+  t.equal(equalsU(d, n), false, 'returns false when Just(undefinded) and Nothing compared')
+  t.equal(equalsU(a, value), false, 'returns false when passed a simple value')
+  t.equal(equalsU(a, nonMaybe), false, 'returns false when passed a non-Maybe')
+
+  t.equal(equalsU(a, b), true, 'returns true when 2 Justs are equal')
+  t.equal(equalsU(n, Maybe.Nothing()), true, 'returns true when Nothings compared')
+
+  t.end()
+})
+
 test('Maybe equals demo', t => {
   const a = Maybe.of(42)
   const b = Maybe.of(6).map(x => x * 7)
@@ -729,6 +1300,27 @@ test('Maybe equals demo', t => {
   t.equal(a.equals(c), false, 'equality with nothing is false')
   t.equal(c.equals(b), false, 'equality from nothing is false')
   t.equal(c.equals(Maybe.Nothing()), true, 'nothing equals nothing')
+
+  t.end()
+})
+
+test('Maybe stand-alone equals demo', t => {
+  const a = Maybe.of(42)
+  const b = Maybe.of(6).map(x => x * 7)
+  const c = Maybe.Nothing()
+
+  const equalsA = equals(a)
+  const equalsC = equals(c)
+
+  t.equal(equalsA(b), true, 'equality returns true')
+  t.equal(equalsA(c), false, 'equality with nothing is false')
+  t.equal(equalsC(b), false, 'equality from nothing is false')
+  t.equal(equalsC(Maybe.Nothing()), true, 'nothing equals nothing')
+
+  t.equal(equalsU(a, b), true, 'equality returns true')
+  t.equal(equalsU(a, c), false, 'equality with nothing is false')
+  t.equal(equalsU(c, b), false, 'equality from nothing is false')
+  t.equal(equalsU(c, Maybe.Nothing()), true, 'nothing equals nothing')
 
   t.end()
 })
@@ -759,6 +1351,46 @@ test('Maybe is function', t => {
   t.end()
 })
 
+test('Maybe stand-alone is function', t => {
+  const a = Maybe.Just([ 1,2 ])
+  const b = Maybe.Just({ a: 1 })
+  const c = Maybe.Just(() => ({}))
+  const d = Maybe.Just(undefined)
+  const e = Maybe.Just(13)
+  const f = Maybe.Just('xyz')
+  const g = Maybe.of(true)
+  const nothing = Maybe.Nothing()
+
+  t.ok(isFunction(is), 'provides an is function')
+  t.ok(isFunction(isU), 'provides an is function')
+
+  t.equal(is(Array)(a), true, 'tests for array type')
+  t.equal(is(Object)(a), false, 'does not call array an object')
+  t.equal(is(Object)(b), true, 'tests for object type')
+  t.equal(is(Function)(c), true, 'tests for function type')
+  t.equal(is(Object)(c), false, 'a function is not considered an object')
+  t.equal(is(Object)(d), false, 'undefined does not match')
+  t.equal(is(Number)(e), true, 'tests for number type')
+  t.equal(is(String)(f), true, 'tests for string type')
+  t.equal(is(Object)(f), false, 'strings are not objects')
+  t.equal(is(Boolean)(g), true, 'tests for boolean type')
+  t.equal(is(Object)(nothing), false, 'nothing fails all tests')
+
+  t.equal(isU(Array, a), true, 'tests for array type')
+  t.equal(isU(Object, a), false, 'does not call array an object')
+  t.equal(isU(Object, b), true, 'tests for object type')
+  t.equal(isU(Function, c), true, 'tests for function type')
+  t.equal(isU(Object, c), false, 'a function is not considered an object')
+  t.equal(isU(Object, d), false, 'undefined does not match')
+  t.equal(isU(Number, e), true, 'tests for number type')
+  t.equal(isU(String, f), true, 'tests for string type')
+  t.equal(isU(Object, f), false, 'strings are not objects')
+  t.equal(isU(Boolean, g), true, 'tests for boolean type')
+  t.equal(isU(Object, nothing), false, 'nothing fails all tests')
+
+  t.end()
+})
+
 test('Maybe is demo', t => {
   t.equal(Maybe.of('a string').is(String), true, 'a string is a String')
   t.equal(Maybe.of(13).is(Number), true, 'a number is a Number')
@@ -774,6 +1406,32 @@ test('Maybe is demo', t => {
   t.end()
 })
 
+test('Maybe stand-alone is demo', t => {
+  t.equal(is(String)(Maybe.of('a string')), true, 'a string is a String')
+  t.equal(is(Number)(Maybe.of(13)), true, 'a number is a Number')
+  t.equal(is(Number)(Maybe.of(true)), false, 'a boolean is not a Number')
+  t.equal(is(Object)(Maybe.of({ a: 1 })), true, 'an object is an Object')
+  t.equal(is(Array)(Maybe.of([ 1, 2, 3 ])), true, 'an array is an Array')
+  t.equal(is(Function)(Maybe.of(x => x)), true, 'a function is a Function')
+  t.equal(is(Date)(Maybe.of(new Date())), true, 'a date is a Date')
+  t.equal(is(Object)(Maybe.of(new Date())), false, 'a date is not an Object')
+  t.equal(is(Function)(Maybe.of(undefined)), false, 'undefined is not a Function')
+  t.equal(is(Object)(Maybe.Nothing()), false, 'nothing is not an Object')
+
+  t.equal(isU(String, Maybe.of('a string')), true, 'a string is a String')
+  t.equal(isU(Number, Maybe.of(13)), true, 'a number is a Number')
+  t.equal(isU(Number, Maybe.of(true)), false, 'a boolean is not a Number')
+  t.equal(isU(Object, Maybe.of({ a: 1 })), true, 'an object is an Object')
+  t.equal(isU(Array, Maybe.of([ 1, 2, 3 ])), true, 'an array is an Array')
+  t.equal(isU(Function, Maybe.of(x => x)), true, 'a function is a Function')
+  t.equal(isU(Date, Maybe.of(new Date())), true, 'a date is a Date')
+  t.equal(isU(Object, Maybe.of(new Date())), false, 'a date is not an Object')
+  t.equal(isU(Function, Maybe.of(undefined)), false, 'undefined is not a Function')
+  t.equal(isU(Object, Maybe.Nothing()), false, 'nothing is not an Object')
+
+  t.end()
+})
+
 test('Maybe isJust', t => {
   const j = Maybe.Just('a just')
   const n = Maybe.Nothing()
@@ -784,12 +1442,32 @@ test('Maybe isJust', t => {
   t.end()
 })
 
+test('Maybe stand-alone isJust', t => {
+  const j = Maybe.Just('a just')
+  const n = Maybe.Nothing()
+
+  t.equal(isJust(j), true, 'isJust is true for Justs')
+  t.equal(isJust(n), false, 'isJust is false for Nothings')
+
+  t.end()
+})
+
 test('Maybe isNothing', t => {
   const j = Maybe.Just('a just')
   const n = Maybe.Nothing()
 
   t.equal(n.isNothing(), true, 'isNothing is true for Nothings')
   t.equal(j.isNothing(), false, 'isNothing is false for Justs')
+
+  t.end()
+})
+
+test('Maybe stand-alone isNothing', t => {
+  const j = Maybe.Just('a just')
+  const n = Maybe.Nothing()
+
+  t.equal(isNothing(n), true, 'isNothing is true for Nothings')
+  t.equal(isNothing(j), false, 'isNothing is false for Justs')
 
   t.end()
 })
@@ -812,6 +1490,44 @@ test('Maybe map errors', t => {
   t.throws(map(m), err, 'throws with non-Maybe')
 
   t.doesNotThrow(map(unit), 'allows a function')
+
+  t.end()
+})
+
+test('Maybe stand-alone map errors', t => {
+  const m = { type: () => 'Fake Maybe' }
+  const mapTest = bindFunc(f => map(f)(Maybe.Just(0)))
+
+  const err = /f is not a function/
+  t.throws(mapTest(undefined), err, 'throws with undefined')
+  t.throws(mapTest(null), err, 'throws with null')
+  t.throws(mapTest(0), err, 'throws with falsey number')
+  t.throws(mapTest(1), err, 'throws with truthy number')
+  t.throws(mapTest(''), err, 'throws with falsey string')
+  t.throws(mapTest('string'), err, 'throws with truthy string')
+  t.throws(mapTest(false), err, 'throws with false')
+  t.throws(mapTest(true), err, 'throws with true')
+  t.throws(mapTest([]), err, 'throws with an array')
+  t.throws(mapTest({}), err, 'throws with object')
+  t.throws(mapTest(m), err, 'throws with non-Maybe')
+
+  t.doesNotThrow(mapTest(unit), 'allows a function')
+
+  const mapUTest = bindFunc(f => mapU(f, Maybe.Just(0)))
+
+  t.throws(mapUTest(undefined), err, 'throws with undefined')
+  t.throws(mapUTest(null), err, 'throws with null')
+  t.throws(mapUTest(0), err, 'throws with falsey number')
+  t.throws(mapUTest(1), err, 'throws with truthy number')
+  t.throws(mapUTest(''), err, 'throws with falsey string')
+  t.throws(mapUTest('string'), err, 'throws with truthy string')
+  t.throws(mapUTest(false), err, 'throws with false')
+  t.throws(mapUTest(true), err, 'throws with true')
+  t.throws(mapUTest([]), err, 'throws with an array')
+  t.throws(mapUTest({}), err, 'throws with object')
+  t.throws(mapUTest(m), err, 'throws with non-Maybe')
+
+  t.doesNotThrow(mapUTest(unit), 'allows a function')
 
   t.end()
 })
@@ -839,10 +1555,10 @@ test('Maybe map fantasy-land errors', t => {
 })
 
 test('Maybe map functionality', t => {
-  const spy = sinon.spy(identity)
+  const spy = sinon.spy(R.identity)
 
-  t.equal(Maybe.Just('Just').map(identity).valueOr('Nothing'), 'Just', 'Just returns a Just')
-  t.equal(Maybe.Nothing().map(identity).valueOr('Nothing'), 'Nothing', 'Nothing returns a Nothing')
+  t.equal(Maybe.Just('Just').map(R.identity).valueOr('Nothing'), 'Just', 'Just returns a Just')
+  t.equal(Maybe.Nothing().map(R.identity).valueOr('Nothing'), 'Nothing', 'Nothing returns a Nothing')
 
   const nothing = Maybe.Nothing().map(spy)
 
@@ -864,7 +1580,70 @@ test('Maybe map functionality', t => {
   const obj = { a: 'a', b: 'b', c: 'c' }
   const objexpected = { a: 'A', b: 'B', c: 'C' }
 
-  t.same(Maybe.of(obj).map(toUpper).valueOr({}), objexpected, 'object mapping')
+  t.same(Maybe.of(obj).map(R.toUpper).valueOr({}), objexpected, 'object mapping')
+
+  t.end()
+})
+
+test('Maybe stand-alone map functionality', t => {
+  const spy = sinon.spy(R.identity)
+
+  const mapId = map(R.identity)
+  const checkValue = valueOr('Nothing')
+  const valueOfMapId = R.compose(checkValue, mapId)
+
+  t.equal(valueOfMapId(Maybe.Just('Just')), 'Just', 'standalone Just returns a Just')
+  t.equal(valueOfMapId(Maybe.Nothing()), 'Nothing', 'standalone Nothing returns a Nothing')
+
+  t.equal(checkValue(mapU(R.identity, Maybe.Just('Just'))), 'Just', 'uncurried Just returns a Just')
+  t.equal(checkValue(mapU(R.identity, Maybe.Nothing())), 'Nothing', 'uncurried Nothing returns a Nothing')
+
+  const nothing = map(spy)(Maybe.Nothing())
+
+  spy.resetHistory()
+  t.equal(checkValue(nothing), 'Nothing', 'standalone returns a Nothing when mapping a Nothing')
+  t.equal(spy.called, false, 'standalone mapping function is never called on Nothing')
+
+  const nothingU = mapU(spy, Maybe.Nothing())
+
+  spy.resetHistory()
+  t.equal(checkValue(nothingU), 'Nothing', 'uncurried returns a Nothing when mapping a Nothing')
+  t.equal(spy.called, false, 'uncurried mapping function is never called on Nothing')
+
+  spy.resetHistory()
+  const def = map(spy)(Maybe.Just('Just'))
+
+  t.equal(checkValue(def), 'Just', 'standalone returns a Just')
+  t.equal(checkValue(def), 'Just', 'standalone returns a Just with the same value when mapped with identity')
+  t.equal(spy.called, true, 'standalone mapped function is called on Just')
+
+  spy.resetHistory()
+  const defU = mapU(spy, Maybe.Just('Just'))
+
+  t.equal(checkValue(defU), 'Just', 'uncurried returns a Just')
+  t.equal(checkValue(defU), 'Just', 'uncurried returns a Just with the same value when mapped with identity')
+  t.equal(spy.called, true, 'uncurried mapped function is called on Just')
+
+  const arr = [ 1, 3, 6, 8 ]
+  const arrmap = x => x * 10
+  const arrexpected = [ 10, 30, 60, 80 ]
+
+  const mapBy10 = map(arrmap)
+  const valueOrEmpty = valueOr([])
+  const checkMapBy10 = R.compose(valueOrEmpty, mapBy10)
+
+  t.same(checkMapBy10(Maybe.Just(arr)), arrexpected, 'standalone array mapping')
+  t.same(valueOrEmpty(mapU(arrmap, Maybe.Just(arr))), arrexpected, 'uncurried array mapping')
+
+  const obj = { a: 'a', b: 'b', c: 'c' }
+  const objexpected = { a: 'A', b: 'B', c: 'C' }
+
+  const mapToUpper = map(R.toUpper)
+  const valueOrEmptyObject = valueOr({})
+  const checkMapToUpper = R.compose(valueOrEmptyObject, mapToUpper)
+
+  t.same(checkMapToUpper(Maybe.of(obj)), objexpected, 'standalone object mapping')
+  t.same(valueOrEmptyObject(mapU(R.toUpper, Maybe.of(obj))), objexpected, 'uncurried object mapping')
 
   t.end()
 })
@@ -878,6 +1657,18 @@ test('Maybe map as ap', t => {
   t.end()
 })
 
+test('Maybe stand-alone map as ap', t => {
+  const divBySix = x => x / 6
+  const a = Maybe.of(42)
+
+  const mapDivSix = map(divBySix)
+
+  t.equal(mapDivSix(a).value, 7, 'changes map function to ap when needed')
+  t.equal(mapU(divBySix, a).value, 7, 'changes map function to ap when needed')
+
+  t.end()
+})
+
 test('Maybe map demo', t => {
   const a = Maybe.of([ 1, 2, 3, 4 ])
   const b = Maybe.of({ a: 'Thanks', b: 'for', c: 'all', d: 'the', e: 'fish' })
@@ -885,13 +1676,36 @@ test('Maybe map demo', t => {
   const n = Maybe.Nothing()
   const nothingValue = '_NOTHING_VALUE_'
 
-  t.deepEqual(a.map(multiply(3)).valueOr(nothingValue), [ 3, 6, 9, 12 ], 'mapping' +
-    ' an array')
-  t.deepEqual(b.map(toUpper).valueOr(nothingValue), { a: 'THANKS', b: 'FOR', c: 'ALL', d: 'THE', e: 'FISH' }, 'mapping an object')
-  t.equal(c.map(x => x % 9 === 0).valueOr(nothingValue), true, 'mapping a' +
-    ' single value' )
-  t.equal(n.map(toUpper).valueOr(nothingValue), nothingValue, 'mapping a' +
-    ' nothing')
+  t.deepEqual(a.map(R.multiply(3)).valueOr(nothingValue), [ 3, 6, 9, 12 ], 'mapping an array')
+  t.deepEqual(b.map(R.toUpper).valueOr(nothingValue), { a: 'THANKS', b: 'FOR', c: 'ALL', d: 'THE', e: 'FISH' }, 'mapping an object')
+  t.equal(c.map(x => x % 9 === 0).valueOr(nothingValue), true, 'mapping a single value' )
+  t.equal(n.map(R.toUpper).valueOr(nothingValue), nothingValue, 'mapping a nothing')
+
+  t.end()
+})
+
+test('Maybe stand-alone map demo', t => {
+  const a = Maybe.of([ 1, 2, 3, 4 ])
+  const b = Maybe.of({ a: 'Thanks', b: 'for', c: 'all', d: 'the', e: 'fish' })
+  const c = Maybe.of(99)
+  const n = Maybe.Nothing()
+  const nothingValue = '_NOTHING_VALUE_'
+  const checker = valueOr(nothingValue)
+
+  const tripleIt = map(R.multiply(3))
+  const upIt = map(R.toUpper)
+  const isMultipleOf9 = map(x => x % 9 === 0)
+
+  t.deepEqual(checker(tripleIt(a)), [ 3, 6, 9, 12 ], 'mapping an array')
+  t.deepEqual(checker(upIt(b)), { a: 'THANKS', b: 'FOR', c: 'ALL', d: 'THE', e: 'FISH' }, 'mapping an object')
+  t.equal(checker(isMultipleOf9(c)), true, 'mapping a single value' )
+  t.equal(checker(upIt(n)), nothingValue, 'mapping a nothing')
+
+  t.deepEqual(checker(mapU(R.multiply(3), a)), [ 3, 6, 9, 12 ], 'mapping an array')
+  t.deepEqual(checker(mapU(R.toUpper, b)),
+    { a: 'THANKS', b: 'FOR', c: 'ALL', d: 'THE', e: 'FISH' }, 'mapping an object')
+  t.equal(checker(mapU(x => x % 9 === 0, c)), true, 'mapping a single value' )
+  t.equal(checker(mapU(R.toUpper, n)), nothingValue, 'mapping a nothing')
 
   t.end()
 })
@@ -974,8 +1788,7 @@ test('Maybe toString functionality', t => {
   t.equal(b.toString(), 'Just {"a":1}', 'Just containing an object is pretty printed')
   t.equal(c$.search('Just '), 0, 'Just containing a function is pretty printed')
   t.ok(c$.search('({})') > 0, 'Function contensts are kinda pretty printed')
-  t.equal(d.toString(), 'Just undefined', 'Just containing undefined is' +
-    ' pretty printed')
+  t.equal(d.toString(), 'Just undefined', 'Just containing undefined is pretty printed')
   t.equal(nothing.toString(), 'Nothing', 'Nothing is pretty printed')
 
   t.end()
@@ -986,8 +1799,8 @@ test('Maybe type', t => {
 
   t.ok(isFunction(Maybe(0).type), 'is a function')
 
-  t.equal(Just(0).type, Maybe.type, 'static and instance versions are the same for Just')
-  t.equal(Nothing(0).type, Maybe.type, 'static and instance versions are the same for Nothing')
+  t.equal(Just(0).type, Maybe.type, 'stand-alone and instance versions are the same for Just')
+  t.equal(Nothing(0).type, Maybe.type, 'stand-alone and instance versions are the same for Nothing')
 
   t.equal(Just(0).type(), '13d-io/Maybe', 'type returns 13d-io/Maybe for Just')
   t.equal(Nothing().type(), '13d-io/Maybe', 'type returns 13d-io/Maybe for Nothing')
@@ -1011,8 +1824,7 @@ test('Maybe valueOr demo', t => {
   const defaultValue = 'default option'
 
   t.equal(j.valueOr(defaultValue), 'selected option', 'just returns its value')
-  t.equal(n.valueOr(defaultValue), 'default option', 'nothing returns the' +
-    ' specified value')
+  t.equal(n.valueOr(defaultValue), 'default option', 'nothing returns the specified value')
 
   t.end()
 })
@@ -1022,13 +1834,13 @@ test('Alt spec tests', t => {
   const b = Maybe.Nothing()
   const c = Maybe.of('c')
 
-  const f = either(always('nothing'), identity)
+  const f = either(R.always('nothing'), R.identity)
 
   t.equals(f(a.alt(b).alt(c)), f(a.alt(b.alt(c))), 'assosiativity')
 
   t.equals(
-    f(a.alt(b).map(identity)),
-    f(a.map(identity).alt(b.map(identity))),
+    f(a.alt(b).map(R.identity)),
+    f(a.map(R.identity).alt(b.map(R.identity))),
     'distributivity'
   )
 
@@ -1037,8 +1849,8 @@ test('Alt spec tests', t => {
 
 test('Alternative spec tests', t => {
   const x = Maybe.of(11)
-  const f = Maybe.of(identity)
-  const g = Maybe.of(multiply(12))
+  const f = Maybe.of(R.identity)
+  const g = Maybe.of(R.multiply(12))
   const n = Maybe.Nothing()
   const nothingValue = -1
 
@@ -1050,7 +1862,7 @@ test('Alternative spec tests', t => {
 })
 
 test('Applicative spec tests', t => {
-  const m = Maybe.Just(identity)
+  const m = Maybe.Just(R.identity)
   const j = Maybe.Just(3)
 
   t.ok(isFunction(j.of), 'Just provides an of function')
@@ -1059,26 +1871,25 @@ test('Applicative spec tests', t => {
   t.equal(m.ap(j).valueOr('Nothing'), 3, 'identity')
   t.equal(
     m.ap(Maybe.of(3)).valueOr('Nothing'),
-    Maybe.of(identity(3)).valueOr('Nothing'),
+    Maybe.of(R.identity(3)).valueOr('Nothing'),
     'homomorphism'
   )
 
   const a = x => m.ap(Maybe.of(x))
-  const b = x => Maybe.of(applyTo(x)).ap(m)
+  const b = x => Maybe.of(R.applyTo(x)).ap(m)
 
   t.equal(a(3).valueOr('Nothing'), b(3).valueOr('Other'), 'interchange Just')
   t.equal(j.ap(m).toString(), 'Just 3', 'Value applying the function works')
-  t.equal(m.ap(j).toString(), 'Just 3', 'Function' +
-    ' applying the value works too')
+  t.equal(m.ap(j).toString(), 'Just 3', 'Function applying the value works too')
   t.equal(j.ap(j).toString(), 'Nothing', 'Value applying itself is nothing')
 
   t.end()
 })
 
 test('Apply spec tests', t => {
-  const m = Maybe.Just(identity)
+  const m = Maybe.Just(R.identity)
 
-  const a = m.map(compose).ap(m).ap(m)
+  const a = m.map(R.compose).ap(m).ap(m)
   const b = m.ap(m.ap(m))
 
   const j = Maybe.Just(3)
@@ -1124,7 +1935,7 @@ test('Functor spec tests', t => {
   t.ok(isFunction(Maybe.Just(0).map), 'Just provides a map function')
   t.ok(isFunction(Maybe.Nothing().map), 'Just provides a map function')
 
-  t.equal(Maybe.Just(null).map(identity).valueOr('Nothing'), 'Nothing', 'identity')
+  t.equal(Maybe.Just(null).map(R.identity).valueOr('Nothing'), 'Nothing', 'identity')
   t.equal(
     Maybe.Just(10).map(x => f(g(x))).valueOr('Nothing'),
     Maybe(10).map(g).map(f).valueOr('Other'),
@@ -1161,18 +1972,18 @@ test('Monoid spec tests', t => {
 test('Plus spec tests', t => {
   const a = Maybe.of('a')
 
-  const f = either(always('nothing'), identity)
+  const f = either(R.always('nothing'), R.identity)
 
   t.equals(f(a.alt(Maybe.zero())), f(a), 'right identity')
   t.equals(f(Maybe.zero().alt(a)), f(a), 'left identity')
-  t.equals(f(Maybe.zero().map(identity)), f(Maybe.zero()), 'annihilation')
+  t.equals(f(Maybe.zero().map(R.identity)), f(Maybe.zero()), 'annihilation')
 
   t.end()
 })
 
 test('Semigroup spec tests', t => {
   const extract =
-    either(always('Nothing'), identity)
+    either(R.always('Nothing'), R.identity)
 
   const a = Maybe.Just([ 'a' ])
   const b = Maybe.Just([ 'b' ])

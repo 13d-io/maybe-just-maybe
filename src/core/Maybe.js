@@ -45,7 +45,11 @@ const _empty = () => () => Nothing()
 
 const _toJust = () => value => Just(value)
 
+const _isNothingBase = context => context.nothing
+
 const _isNothing = context => () => context.nothing
+
+const _isJustBase = context => !context.nothing
 
 const _isJust = context => () => !context.nothing
 
@@ -56,19 +60,28 @@ const _evalAlt = (context, other) => () => {
   return context.nothing && !other.nothing && context.toJust(other.value) || context
 }
 
-const _alt = context => other =>
+const _altBase = (context, other) =>
   _test(
     Nothing(), _evalAlt(context, other), other
   )
 
-const _either = context => (left, right) =>
+const _alt = context => other =>
+  _altBase(context, other)
+
+const _eitherBase = (left, right, context) =>
   context.nothing ? left() : right(context.value)
+
+const _either = context => (left, right) =>
+  _eitherBase(left, right, context)
 
 const _evalEquals = (context, other) => () =>
   context.nothing ? other.nothing : equals(other.value, context.value) && !other.nothing
 
-const _equals = context => other =>
+const _equalsBase = (context, other) =>
   _test(false, _evalEquals(context, other), other)
+
+const _equals = context => other =>
+  _equalsBase(context, other)
 
 const CONCAT_IGNORE_TYPES = [ Number, Object, Boolean, Function ]
 
@@ -92,8 +105,11 @@ const _testConcat = (context, other) => () => _safe(
   CONCAT_IGNORE_TYPES, [ 'concat' ]
 )
 
-const _concat = context => other =>
+const _concatBase = (context, other) =>
   _test(Nothing(), _testConcat(context, other), other)
+
+const _concat = context => other =>
+  _concatBase(context, other)
 
 const _evalMap = (f, context) => () =>
   Just(map(f, context.value))
@@ -105,7 +121,7 @@ const _testMapToAp = (f, context) => _safe(
   context.value, Nothing(), _changeMapToAp(f, context)
 )
 
-const _map = context => f =>
+const _mapBase = (f, context) =>
   _safe(
     context.value,
     () => _testMapToAp(f, context),
@@ -113,6 +129,9 @@ const _map = context => f =>
     [ Number, String, Boolean ],
     [ 'map' ]
   )()
+
+const _map = context => f =>
+  _mapBase(f, context)
 
 const _evalAp = (f, context) => context.nothing ? Nothing() : Just(f(context.value))
 
@@ -125,18 +144,24 @@ const _testAp = (context, other) => () => {
     || Nothing()
 }
 
-const _ap = context => other =>
+const _apBase = (context, other) =>
   _test(Nothing(), _testAp(context, other), other)
+
+const _ap = context => other =>
+  _apBase(context, other)
 
 const _evalChain = (f, context) => () => {
   const res = f(context.value)
   return _test(Nothing(), () => res, res)
 }
 
-const _chain = context => f =>
+const _chainBase = (f, context) =>
   _safe(
     context.value, Nothing(), _evalChain(f, context)
   )
+
+const _chain = context => f =>
+  _chainBase(f, context)
 
 const _json = value => {
   if (typeof value === 'function') {
@@ -156,10 +181,13 @@ const _evalIs = (type, value) =>
     ? is(type, value) && !is(Array, value) && !is(Function, value) && !is(Date, value)
     : is(type, value)
 
-const _is = context => type =>
+const _isBase = (type, context) =>
   context.nothing
     ? false
     : _evalIs(type, context.value)
+
+const _is = context => type =>
+  _isBase(type, context)
 
 const _safe = (value, left, right, notypes = [], doesimplement = []) =>
   (isNil(value) || notypes.find(t => _evalIs(t, value)))
@@ -226,6 +254,27 @@ Maybe.zero = Nothing
 Maybe[fantasyLand.of] = Just
 Maybe[fantasyLand.empty] = Nothing
 Maybe[fantasyLand.zero] = Nothing
+
+Maybe.alt = _alt
+Maybe.altU = _altBase
+Maybe.ap = _ap
+Maybe.apU = _apBase
+Maybe.chain = f => context => _chainBase(f, context)
+Maybe.chainU = _chainBase
+Maybe.concat = _concat
+Maybe.concatU = _concatBase
+Maybe.either = (left, right) => context => _eitherBase(left, right, context)
+Maybe.eitherU = _eitherBase
+Maybe.equals = _equals
+Maybe.equalsU = _equalsBase
+Maybe.is = type => context => _isBase(type, context)
+Maybe.isU = _isBase
+Maybe.isJust = _isJustBase
+Maybe.isNothing = _isNothingBase
+Maybe.map = f => context => _mapBase(f, context)
+Maybe.mapU = _mapBase
+Maybe.valueOr = defaultValue => context => _valueOr(context)(defaultValue)
+Maybe.toString = _toString
 
 Maybe['@@type'] = libType
 Maybe.type = _type
