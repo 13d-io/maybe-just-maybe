@@ -116,7 +116,7 @@ values allow the applied functions to assume that they will only be applied when
   - [Just / of](#just--a---maybe-a)
   - [Nothing / empty / zero](#nothing-----maybe-a)
   - [asyncOf](#asyncof--promise-a---maybe-a)
-- [Instance methods](#instance-methods)
+- [Instance methods](#instance-methods-and-standalone-counterparts)
   - [alt](#alt--alt-maybe)
   - [ap](#ap--apply-maybe)
   - [chain](#chain--chain-maybe)
@@ -130,7 +130,7 @@ values allow the applied functions to assume that they will only be applied when
   - [map](#map--functor-maybe)
   - [of](#of--maybe-a--b---maybe-b)
   - [toJust](#tojust--maybe-a--b---maybe-b)
-  - [toString](#tostring---maybe-a-----string)
+  - [toString](#tostring)
   - [valueOr](#valueor)
   - [zero](#zero--plus-maybe--maybe-a-----maybe-a)
 
@@ -709,7 +709,11 @@ j.toJust('another value') // Just "another value"
 n.toJust('new value') // Just "new value"
 ```
 
-#### toString = `:: Maybe a ~> () -> String`
+#### toString
+
+- **toString (instance)** `:: Maybe a ~> () -> String`
+
+- **toString (standalone)** `:: Maybe -> String`
 
 returns a string representation of the `Maybe` instance
 
@@ -721,9 +725,15 @@ const a = Maybe.Just([ 1, 2 ])
 const b = Maybe.Just({ a: 1 })
 const n = Maybe.Nothing()
 
+// instance method examples
 a.toString() // 'Just [1,2]'
 b.toString() // 'Just {"a":1}'
-c.toString() // 'Nothing'
+n.toString() // 'Nothing'
+
+// standalone function examples
+toString(a) // 'Just [1,2]'
+toString(b) // 'Just {"a":1}'
+toString(n) // 'Nothing'
 
 ```
 

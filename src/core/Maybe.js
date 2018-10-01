@@ -19,10 +19,6 @@ const fantasyLand = {
   zero: 'fantasy-land/zero'
 }
 
-const imps = [ 'alt', 'ap', 'chain', 'concat', 'equals', 'map', 'of', 'zero' ]
-
-const _implements = test => !!imps.find(item => item === test)
-
 const Just = value => Maybe(value, false)
 
 const Nothing = () => Maybe(undefined, true)
@@ -174,10 +170,13 @@ const _json = value => {
   return is(String, result) ? result : result
 }
 
-const _toString = context => () =>
+const _toStringBase = context =>
   context.nothing
     ? 'Nothing'
     : 'Just ' + _json(context.value)
+
+const _toString = context => () =>
+  _toStringBase(context)
 
 const _evalIs = (type, value) =>
   type === Object
@@ -278,11 +277,7 @@ Maybe.map = f => context => _mapBase(f, context)
 Maybe.mapU = _mapBase
 Maybe.valueOr = defaultValue => context => _valueOrBase(defaultValue, context)
 Maybe.valueOrU = _valueOrBase
-Maybe.toString = _toString
-
-Maybe['@@type'] = libType
+Maybe.toString = _toStringBase
 Maybe.type = _type
-
-Maybe['@@implements'] = _implements
 
 module.exports = Maybe

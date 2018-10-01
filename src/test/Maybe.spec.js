@@ -4,36 +4,32 @@ const R = require('ramda')
 
 const {
   bindFunc,
-  fantasyLand,
   isArray,
-  isObject,
   isFunction,
-  isString,
-  isSameType,
+  typesMatch,
   unit
 } = require('./helpers')
 
 const Maybe = require('../core/Maybe')
 
-// const { toString }
 const { alt, altU, ap, apU, chain, chainU, concat, concatU, either, eitherU, equals, equalsU,
-  is, isU, isJust, isNothing, map, mapU, valueOr } = Maybe
+  is, isU, isJust, isNothing, map, mapU, toString, valueOr } = Maybe
 
 test('Maybe', t => {
-  const m = Maybe(0)
+  const m = Maybe('x')
 
-  t.ok(isFunction(Maybe), 'is a function')
-  t.ok(isObject(m), 'returns an object')
+  t.ok(isFunction(Maybe), 'Maybe is a function')
+  t.ok(isFunction(m), 'Maybe returns a function')
 
-  t.equals(Maybe.Just(2).constructor, Maybe, 'provides TypeRep on constructor for Just')
-  t.equals(Maybe.Nothing().constructor, Maybe, 'provides TypeRep on constructor for Nothing')
+  t.equals(Maybe.Just('y').constructor, Maybe, 'Just instances are of type Maybe')
+  t.equals(Maybe.Nothing().constructor, Maybe, 'Nothing instances are of type Maybe')
 
-  t.ok(isFunction(Maybe.of), 'provides an of function')
-  t.ok(isFunction(Maybe.zero), 'provides a zero function')
   t.ok(isFunction(Maybe.Nothing), 'provides a Nothing constructor')
   t.ok(isFunction(Maybe.Just), 'provides a Just constructor')
+  t.ok(isFunction(Maybe.of), 'provides an of function')
+  t.ok(isFunction(Maybe.zero), 'provides a zero function')
+  t.ok(isFunction(Maybe.empty), 'provides an empty function')
   t.ok(isFunction(Maybe.type), 'provides a type function')
-  t.ok(isString(Maybe['@@type']), 'provides a @@type string')
 
   t.ok(isFunction(Maybe.alt), 'provides an alt function')
   t.ok(isFunction(Maybe.altU), 'provides an altU function')
@@ -53,9 +49,10 @@ test('Maybe', t => {
   t.ok(isFunction(Maybe.mapU), 'provides a mapU function')
   t.ok(isFunction(Maybe.toString), 'provides a toString function')
   t.ok(isFunction(Maybe.valueOr), 'provides a valueOr function')
+  t.ok(isFunction(Maybe.valueOrU), 'provides a valueOrU function')
 
   const err = /Invalid Maybe constructor/
-  t.throws(Maybe, err, 'throws with no parameters')
+  t.throws(Maybe, err, 'throws an exception when instantiated with no parameters')
 
   t.end()
 })
@@ -77,53 +74,27 @@ test('Maybe properties', t => {
 
 test('Maybe fantasy-land api', t => {
   const n = Maybe.Nothing()
-  const j = Maybe.Just('')
+  const j = Maybe.Just(0)
 
-  t.ok(isFunction(Maybe[fantasyLand.zero]), 'provides zero function on constructor')
-  t.ok(isFunction(Maybe[fantasyLand.of]), 'provides of function on constructor')
+  t.ok(isFunction(Maybe['fantasy-land/empty']), 'provides empty function on constructor')
+  t.ok(isFunction(Maybe['fantasy-land/zero']), 'provides zero function on constructor')
+  t.ok(isFunction(Maybe['fantasy-land/of']), 'provides of function on constructor')
 
-  t.ok(isFunction(n[fantasyLand.zero]), 'provides zero method on Nothing instance')
-  t.ok(isFunction(n[fantasyLand.of]), 'provides of method on Nothing instance')
-  t.ok(isFunction(n[fantasyLand.equals]), 'provides equals method on Nothing instance')
-  t.ok(isFunction(n[fantasyLand.alt]), 'provides alt method on Nothing instance')
-  t.ok(isFunction(n[fantasyLand.concat]), 'provides concat method on Nothing instance')
-  t.ok(isFunction(n[fantasyLand.map]), 'provides map method on Nothing instance')
-  t.ok(isFunction(n[fantasyLand.chain]), 'provides chain method on Nothing instance')
+  t.ok(isFunction(n['fantasy-land/alt']), 'provides alt method on Nothing instance')
+  t.ok(isFunction(n['fantasy-land/chain']), 'provides chain method on Nothing instance')
+  t.ok(isFunction(n['fantasy-land/concat']), 'provides concat method on Nothing instance')
+  t.ok(isFunction(n['fantasy-land/equals']), 'provides equals method on Nothing instance')
+  t.ok(isFunction(n['fantasy-land/map']), 'provides map method on Nothing instance')
+  t.ok(isFunction(n['fantasy-land/of']), 'provides of method on Nothing instance')
+  t.ok(isFunction(n['fantasy-land/zero']), 'provides zero method on Nothing instance')
 
-  t.ok(isFunction(j[fantasyLand.zero]), 'provides zero method on Just instance')
-  t.ok(isFunction(j[fantasyLand.of]), 'provides of method on Just instance')
-  t.ok(isFunction(j[fantasyLand.equals]), 'provides equals method on Just instance')
-  t.ok(isFunction(j[fantasyLand.alt]), 'provides alt method on Just instance')
-  t.ok(isFunction(j[fantasyLand.concat]), 'provides concat method on Just instance')
-  t.ok(isFunction(j[fantasyLand.map]), 'provides map method on Just instance')
-  t.ok(isFunction(j[fantasyLand.chain]), 'provides chain method on Just instance')
-
-  t.end()
-})
-
-test('Maybe @@implements', t => {
-  const f = Maybe['@@implements']
-
-  t.equal(f('alt'), true, 'implements alt func')
-  t.equal(f('ap'), true, 'implements ap func')
-  t.equal(f('chain'), true, 'implements chain func')
-  t.equal(f('concat'), true, 'implements concat func')
-  t.equal(f('equals'), true, 'implements equals func')
-  t.equal(f('map'), true, 'implements map func')
-  t.equal(f('of'), true, 'implements of func')
-  t.equal(f('zero'), true, 'implements zero func')
-
-  t.end()
-})
-
-test('Maybe @@type', t => {
-  const { Just, Nothing } = Maybe
-
-  t.equal(Just(0)['@@type'], Maybe['@@type'], 'stand-alone and instance versions are the same for Just')
-  t.equal(Nothing(0)['@@type'], Maybe['@@type'], 'stand-alone and instance versions are the same for Nothing')
-
-  t.equal(Just(0)['@@type'], '13d-io/Maybe', 'type returns 13d-io/Maybe for Just')
-  t.equal(Nothing()['@@type'], '13d-io/Maybe', 'type returns 13d-io/Maybe for Nothing')
+  t.ok(isFunction(j['fantasy-land/alt']), 'provides alt method on Just instance')
+  t.ok(isFunction(j['fantasy-land/chain']), 'provides chain method on Just instance')
+  t.ok(isFunction(j['fantasy-land/concat']), 'provides concat method on Just instance')
+  t.ok(isFunction(j['fantasy-land/equals']), 'provides equals method on Just instance')
+  t.ok(isFunction(j['fantasy-land/map']), 'provides map method on Just instance')
+  t.ok(isFunction(j['fantasy-land/of']), 'provides of method on Just instance')
+  t.ok(isFunction(j['fantasy-land/zero']), 'provides zero method on Just instance')
 
   t.end()
 })
@@ -228,7 +199,7 @@ test('Maybe stand-alone alt errors', t => {
 test('Maybe alt fantasy-land errors', t => {
   const m = { type: () => 'Maybe...Not' }
 
-  const altJust = x => Maybe.of(0)[fantasyLand.alt](x)
+  const altJust = x => Maybe.of(0)['fantasy-land/alt'](x)
 
   t.equal(altJust(undefined).isNothing(), true, 'nothing when passed an undefined with Just')
   t.equal(altJust(null).isNothing(), true, 'nothing when passed a null with Just')
@@ -242,7 +213,7 @@ test('Maybe alt fantasy-land errors', t => {
   t.equal(altJust({}).isNothing(), true, 'nothing when passed an object with Just')
   t.equal(altJust(m).isNothing(), true, 'nothing when container types differ on Just')
 
-  const altNothing = x => Maybe.Nothing()[fantasyLand.alt](x)
+  const altNothing = x => Maybe.Nothing()['fantasy-land/alt'](x)
 
   t.equal(altNothing(undefined).isNothing(), true, 'nothing when passed an undefined with Nothing')
   t.equal(altNothing(null).isNothing(), true, 'nothing when passed a null with Nothing')
@@ -567,7 +538,7 @@ test('Maybe stand-alone chain errors', t => {
 })
 
 test('Maybe chain fantasy-land errors', t => {
-  const chain = bindFunc(Maybe(0)[fantasyLand.chain])
+  const chain = bindFunc(Maybe(0)['fantasy-land/chain'])
 
   const noFunc = /f is not a function/
   t.throws(chain(undefined), noFunc, 'throws with undefined')
@@ -836,7 +807,7 @@ test('Maybe concat fantasy-land errors', t => {
 
   const good = Maybe.of([])
 
-  const f = () => Maybe.of([])[fantasyLand.concat]
+  const f = () => Maybe.of([])['fantasy-land/concat']
 
   t.equal(f()(undefined).isNothing(), true, 'nothing with undefined')
   t.equal(f()(null).isNothing(), true, 'nothing with null')
@@ -851,7 +822,7 @@ test('Maybe concat fantasy-land errors', t => {
   t.equal(f()(m).isNothing(), true, 'nothing with non-Maybe')
 
   const nothingDefault = '__NOTHING_DEFAULT__'
-  const notSemiLeft = x => Maybe.of(x)[fantasyLand.concat](good).valueOr(nothingDefault)
+  const notSemiLeft = x => Maybe.of(x)['fantasy-land/concat'](good).valueOr(nothingDefault)
   const goodValue = good.valueOr(nothingDefault + '__GOOD__')
 
   t.equal(notSemiLeft(undefined), goodValue, 'good again with undefined on left')
@@ -864,7 +835,7 @@ test('Maybe concat fantasy-land errors', t => {
   t.equal(notSemiLeft(true), nothingDefault, 'nothing with true on left')
   t.equal(notSemiLeft({}), nothingDefault, 'nothing with object on left')
 
-  const notSemiRight = x => good[fantasyLand.concat](Maybe.of(x)).valueOr(nothingDefault)
+  const notSemiRight = x => good['fantasy-land/concat'](Maybe.of(x)).valueOr(nothingDefault)
 
   t.equal(notSemiRight(undefined), goodValue, 'good again with undefined on right')
   t.equal(notSemiRight(null), goodValue, 'good again with null on right')
@@ -876,7 +847,7 @@ test('Maybe concat fantasy-land errors', t => {
   t.equal(notSemiRight(true), nothingDefault, 'nothing with true on right')
   t.equal(notSemiRight({}), nothingDefault, 'nothing with object on right')
 
-  const noMatch = () => good[fantasyLand.concat](Maybe.of(''))
+  const noMatch = () => good['fantasy-land/concat'](Maybe.of(''))
   t.equal(noMatch().isNothing(), true, 'nothing with different semigroups')
 
   t.end()
@@ -894,9 +865,9 @@ test('Maybe concat functionality', t => {
   const nothingRight = a.concat(nothing)
   const nothingLeft = nothing.concat(a)
 
-  t.ok(isSameType(Maybe, just), 'returns another Maybe with Just')
-  t.ok(isSameType(Maybe, nothingRight), 'returns another Maybe with Nothing on Right')
-  t.ok(isSameType(Maybe, nothingLeft), 'returns another Maybe with Nothing on Left')
+  t.ok(typesMatch(Maybe, just), 'returns another Maybe with Just')
+  t.ok(typesMatch(Maybe, nothingRight), 'returns another Maybe with Nothing on Right')
+  t.ok(typesMatch(Maybe, nothingLeft), 'returns another Maybe with Nothing on Left')
 
   t.same(extract(just), [ 1, 2, 4, 3 ], 'concats the inner semigroup with Justs')
   t.same(extract(nothingRight), [ 1, 2 ], 'returns a with a Nothing on Right')
@@ -932,13 +903,13 @@ test('Maybe stand-alone concat functionality', t => {
   const nothingLeft = concat(nothing)(a)
   const nothingLeftU = concatU(nothing, a)
 
-  t.ok(isSameType(Maybe, just), 'returns another Maybe with Just')
-  t.ok(isSameType(Maybe, nothingRight), 'returns another Maybe with Nothing on Right')
-  t.ok(isSameType(Maybe, nothingLeft), 'returns another Maybe with Nothing on Left')
+  t.ok(typesMatch(Maybe, just), 'returns another Maybe with Just')
+  t.ok(typesMatch(Maybe, nothingRight), 'returns another Maybe with Nothing on Right')
+  t.ok(typesMatch(Maybe, nothingLeft), 'returns another Maybe with Nothing on Left')
 
-  t.ok(isSameType(Maybe, justU), 'returns another Maybe with Just')
-  t.ok(isSameType(Maybe, nothingRightU), 'returns another Maybe with Nothing on Right')
-  t.ok(isSameType(Maybe, nothingLeftU), 'returns another Maybe with Nothing on Left')
+  t.ok(typesMatch(Maybe, justU), 'returns another Maybe with Just')
+  t.ok(typesMatch(Maybe, nothingRightU), 'returns another Maybe with Nothing on Right')
+  t.ok(typesMatch(Maybe, nothingLeftU), 'returns another Maybe with Nothing on Left')
 
   t.same(extract(just), [ 1, 2, 4, 3 ], 'concats the inner semigroup with Justs')
   t.same(extract(nothingRight), [ 1, 2 ], 'returns a with a Nothing on Right')
@@ -1534,7 +1505,7 @@ test('Maybe stand-alone map errors', t => {
 
 test('Maybe map fantasy-land errors', t => {
   const m = { type: () => 'Maybe...Not' }
-  const map = bindFunc(Maybe.Just(0)[fantasyLand.map])
+  const map = bindFunc(Maybe.Just(0)['fantasy-land/map'])
 
   const err = /f is not a function/
   t.throws(map(undefined), err, 'throws with undefined')
@@ -1769,9 +1740,12 @@ test('Maybe toString', t => {
 
   t.ok(isFunction(m.toString), 'Just provides a toString function')
   t.ok(isFunction(n.toString), 'Nothing provides a toString function')
+  t.ok(isFunction(toString), 'Maybe provides a standalone toString function')
 
   t.equal(m.toString(), 'Just "great"', 'returns toString string')
   t.equal(n.toString(), 'Nothing', 'Nothing returns toString string')
+  t.equal(toString(m), 'Just "great"', 'returns toString string')
+  t.equal(toString(n), 'Nothing', 'Nothing returns toString string')
 
   t.end()
 })
@@ -1792,18 +1766,25 @@ test('Maybe toString functionality', t => {
   t.equal(d.toString(), 'Just undefined', 'Just containing undefined is pretty printed')
   t.equal(nothing.toString(), 'Nothing', 'Nothing is pretty printed')
 
+  t.equal(toString(a), 'Just [1,2]', 'Just containing an array is pretty printed')
+  t.equal(toString(b), 'Just {"a":1}', 'Just containing an object is pretty printed')
+  t.equal(toString(c).search('Just '), 0, 'Just containing a function is pretty printed')
+  t.ok(toString(c).search('({})') > 0, 'Function contensts are kinda pretty printed')
+  t.equal(toString(d), 'Just undefined', 'Just containing undefined is pretty printed')
+  t.equal(toString(nothing), 'Nothing', 'Nothing is pretty printed')
+
   t.end()
 })
 
 test('Maybe type', t => {
   const { Just, Nothing } = Maybe
 
-  t.ok(isFunction(Maybe(0).type), 'is a function')
+  t.ok(isFunction(Maybe('w').type), 'is a function')
 
-  t.equal(Just(0).type, Maybe.type, 'stand-alone and instance versions are the same for Just')
-  t.equal(Nothing(0).type, Maybe.type, 'stand-alone and instance versions are the same for Nothing')
+  t.equal(Just('x').type, Maybe.type, 'stand-alone and instance versions are the same for Just')
+  t.equal(Nothing('y').type, Maybe.type, 'stand-alone and instance versions are the same for Nothing')
 
-  t.equal(Just(0).type(), '13d-io/Maybe', 'type returns 13d-io/Maybe for Just')
+  t.equal(Just('z').type(), '13d-io/Maybe', 'type returns 13d-io/Maybe for Just')
   t.equal(Nothing().type(), '13d-io/Maybe', 'type returns 13d-io/Maybe for Nothing')
 
   t.end()
