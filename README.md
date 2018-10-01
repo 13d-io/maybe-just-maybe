@@ -319,11 +319,11 @@ by that evaluation. If the function does not return a `Maybe` value then chain w
 const { chain, chainU } = Maybe
 
 const items = Maybe.of([
-{ value: 'cat', type: 'pet', active: true },
-{ value: 'flower', type: 'pot', active: false },
-{ value: 'dog', type: 'pet', active: true },
-{ value: 'bird', type: 'pet', active: false },
-{ value: 'cherry', type: 'pit', active: true }
+  { value: 'cat', type: 'pet', active: true },
+  { value: 'flower', type: 'pot', active: false },
+  { value: 'dog', type: 'pet', active: true },
+  { value: 'bird', type: 'pet', active: false },
+  { value: 'cherry', type: 'pit', active: true }
 ])
 
 const getActives = R.filter(R.propEq('active', true))
@@ -349,27 +349,27 @@ chainU(isPet, items)          // uncurried
 
 // 3 ways to get all active pets that start with 'c'
 items.chain(startsWithC)
-.chain(isPet)
-.chain(isActive)            // instance methods
+  .chain(isPet)
+  .chain(isActive)            // instance methods
 activeCPets(items)            // curried
 chainU(isPet, 
-chainU(isActive, 
-  chainU(startsWithC, items)
-)
+  chainU(isActive, 
+    chainU(startsWithC, items)
+  )
 )                             // uncurried
 //result in Just [ { value: 'cat', type: 'pet', active: true } ]
 
 // 3 examples of chains from a Nothing
 // that all result in a Nothing
 Maybe.Nothing()
-.chain(startsWithC)
-.chain(isPet)
-.chain(isActive)            // instance methods
+  .chain(startsWithC)
+  .chain(isPet)
+  .chain(isActive)            // instance methods
 activeCPets(Maybe.Nothing())  // curried
 chainU(isPet, 
-chainU(isActive, 
-  chainU(startsWithC, Maybe.Nothing())
-)
+  chainU(isActive, 
+    chainU(startsWithC, Maybe.Nothing())
+  )
 )                             // uncurried
 ```
 
@@ -469,18 +469,18 @@ eitherU(left, right, n) // []
 
 #### empty `:: Maybe a ~> () -> Maybe a`
 
-  returns a `Maybe` instance of type `Nothing` regardless of the type of the original `Maybe`
+returns a `Maybe` instance of type `Nothing` regardless of the type of the original `Maybe`
 
-  *arguments:* none
+*arguments:* none
 
-  *example:*
-  ```javascript
-  const j = Maybe.of('any value')
-  const n = Maybe.Nothing()
+*example:*
+```javascript
+const j = Maybe.of('any value')
+const n = Maybe.Nothing()
 
-  j.empty() // Nothing
-  n.empty() // Nothing
-  ```
+j.empty() // Nothing
+n.empty() // Nothing
+```
 
 #### equals `:: Setoid a`
 
@@ -643,33 +643,33 @@ const { map, mapU } = Maybe
 
 const a = Maybe.of([ 1, 2, 3, 4 ])
 const b = Maybe.of({
-a: 'Thanks',
-b: 'for', 
-c: 'all', 
-d: 'the', 
-e: 'fish' 
+  a: 'Thanks',
+  b: 'for', 
+  c: 'all', 
+  d: 'the', 
+  e: 'fish' 
 })
 const c = Maybe.of(99)
 const n = Maybe.Nothing()
 
 // instance method examples
 a.map(R.multiply(3)) // Just [ 3, 6, 9, 12 ]
-b.map(R.toUpper)  // Just { 
-                //   a: 'THANKS', 
-                //   b: 'FOR', 
-                //   c: 'ALL', 
-                //   d: 'THE', 
-                //   e: 'FISH' 
-                // }
+b.map(R.toUpper)     // Just { 
+                     //   a: 'THANKS', 
+                     //   b: 'FOR', 
+                     //   c: 'ALL', 
+                     //   d: 'THE', 
+                     //   e: 'FISH' 
+                     // }
 c.map(x => x % 9 === 0) // Just true
 n.map(toUpper)  // Nothing
 
 // curried examples
 const tripleIt = map(R.multiply(3))
 const headsUp = R.compose(
-R.prop('a'), 
-valueOr({ a: 'Sorry!' }), 
-map(R.toUpper)
+  R.prop('a'), 
+  valueOr({ a: 'Sorry!' }), 
+  map(R.toUpper)
 )
 tripleIt(a) // Just [ 3, 6, 9, 12 ]
 headsUp(b) // 'THANKS'

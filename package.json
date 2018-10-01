@@ -1,6 +1,6 @@
 {
   "name": "maybe-just-maybe",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "A Maybe monad specifically designed for use with ramda.",
   "main": "./index.js",
   "scripts": {
