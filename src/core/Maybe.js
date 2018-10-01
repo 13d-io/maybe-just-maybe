@@ -53,8 +53,11 @@ const _isJustBase = context => !context.nothing
 
 const _isJust = context => () => !context.nothing
 
-const _valueOr = context => defaultValue =>
+const _valueOrBase = (defaultValue, context) =>
   context.nothing ? defaultValue : context.value
+
+const _valueOr = context => defaultValue =>
+  _valueOrBase(defaultValue, context)
 
 const _evalAlt = (context, other) => () => {
   return context.nothing && !other.nothing && context.toJust(other.value) || context
@@ -273,7 +276,8 @@ Maybe.isJust = _isJustBase
 Maybe.isNothing = _isNothingBase
 Maybe.map = f => context => _mapBase(f, context)
 Maybe.mapU = _mapBase
-Maybe.valueOr = defaultValue => context => _valueOr(context)(defaultValue)
+Maybe.valueOr = defaultValue => context => _valueOrBase(defaultValue, context)
+Maybe.valueOrU = _valueOrBase
 Maybe.toString = _toString
 
 Maybe['@@type'] = libType

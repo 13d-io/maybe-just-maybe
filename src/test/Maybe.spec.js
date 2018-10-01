@@ -1694,12 +1694,13 @@ test('Maybe stand-alone map demo', t => {
 
   const tripleIt = map(R.multiply(3))
   const upIt = map(R.toUpper)
+  const headsUp = R.compose(R.prop('a'), valueOr({ a: 'Sorry!' }), upIt)
   const isMultipleOf9 = map(x => x % 9 === 0)
 
   t.deepEqual(checker(tripleIt(a)), [ 3, 6, 9, 12 ], 'mapping an array')
-  t.deepEqual(checker(upIt(b)), { a: 'THANKS', b: 'FOR', c: 'ALL', d: 'THE', e: 'FISH' }, 'mapping an object')
+  t.deepEqual(headsUp(b), 'THANKS', 'mapping an object')
   t.equal(checker(isMultipleOf9(c)), true, 'mapping a single value' )
-  t.equal(checker(upIt(n)), nothingValue, 'mapping a nothing')
+  t.equal(headsUp(n), 'Sorry!', 'mapping a nothing')
 
   t.deepEqual(checker(mapU(R.multiply(3), a)), [ 3, 6, 9, 12 ], 'mapping an array')
   t.deepEqual(checker(mapU(R.toUpper, b)),

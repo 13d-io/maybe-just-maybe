@@ -1,5 +1,4 @@
 .npmignore
 .idea
 *.spec.js
-build/test/
-src/test/
+test
