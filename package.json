@@ -4,8 +4,6 @@
   "description": "A Maybe monad specifically designed for use with ramda.",
   "main": "./index.js",
   "scripts": {
-    "contributors:add": "all-contributors add",
-    "contributors:generate": "all-contributors generate",
     "precommit": "lint-staged",
     "prepush": "npm test",
     "preversion": "npm run build",
@@ -55,7 +53,6 @@
     ]
   },
   "devDependencies": {
-    "all-contributors-cli": "^4.11.1",
     "babel-eslint": "^10.0.2",
     "buble": "^0.19.7",
     "eslint": "^6.0.1",
@@ -70,7 +67,7 @@
     "tap-spec": "^5.0.0",
     "tape": "^4.10.2",
     "uglify-js": "^3.6.0",
-    "webpack": "^4.35.0",
+    "webpack": "^4.41.2",
     "webpack-cli": "^3.3.5"
   },
   "dependencies": {
