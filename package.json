@@ -1,6 +1,6 @@
 {
   "name": "maybe-just-maybe",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "description": "A Maybe monad specifically designed for use with ramda.",
   "main": "./index.js",
   "scripts": {
@@ -56,10 +56,10 @@
     "babel-eslint": "^10.0.2",
     "buble": "^0.19.7",
     "eslint": "^6.0.1",
-    "eslint-watch": "^5.1.2",
+    "eslint-watch": "^7.0.0",
     "husky": "^0.14.3",
     "lint-staged": "^9.2.0",
-    "nodemon": "^1.19.1",
+    "nodemon": "^2.0.4",
     "nyc": "^14.1.1",
     "rimraf": "^2.6.3",
     "rxjs-compat": "^6.5.2",
